@@ -10,6 +10,7 @@
 #include <QWebEngineView>
 #include <QUrl>
 #include <QSplitter>
+#include <QDialog>
 
 namespace Ui {
 class MainWindow;
@@ -24,6 +25,7 @@ public:
     ~MainWindow();
 
     void createToolBar();//创建工具栏
+    void setWindowFont();//初始化所有部件的字体
 
 private:
     Ui::MainWindow *ui;
@@ -31,6 +33,10 @@ private:
     QToolBar *fileTool;      //工具栏
     QToolBar *editTool;
     QToolBar *doToolBar;
+
+private slots:
+    void addFolderActionTriggered();
+    void addSubcriptionActionTriggered();
 
 };
 
