@@ -15,11 +15,22 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    feed.cpp \
+    rss.cpp \
+    atom.cpp \
+    feedlist.cpp \
+    folderlistmanager.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    feed.h \
+    rss.h \
+    atom.h \
+    feedlist.h \
+    folderlistmanager.h
 
 FORMS    += mainwindow.ui \
     addfolder.ui
 
-RESOURCES +=
+RESOURCES += \
+    feed_files.qrc

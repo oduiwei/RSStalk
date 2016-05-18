@@ -225,69 +225,17 @@
           <property name="currentIndex">
            <number>0</number>
           </property>
-          <widget class="QWidget" name="widget">
+          <widget class="QWidget" name="page1">
            <property name="geometry">
             <rect>
              <x>0</x>
              <y>0</y>
              <width>256</width>
-             <height>568</height>
+             <height>692</height>
             </rect>
            </property>
            <attribute name="label">
-            <string>学院新闻</string>
-           </attribute>
-          </widget>
-          <widget class="QWidget" name="page_3">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>256</width>
-             <height>568</height>
-            </rect>
-           </property>
-           <attribute name="label">
-            <string>学院通知</string>
-           </attribute>
-          </widget>
-          <widget class="QWidget" name="page_4">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>256</width>
-             <height>568</height>
-            </rect>
-           </property>
-           <attribute name="label">
-            <string>就业信息</string>
-           </attribute>
-          </widget>
-          <widget class="QWidget" name="page_5">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>256</width>
-             <height>568</height>
-            </rect>
-           </property>
-           <attribute name="label">
-            <string>学术动态</string>
-           </attribute>
-          </widget>
-          <widget class="QWidget" name="page_2">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>256</width>
-             <height>568</height>
-            </rect>
-           </property>
-           <attribute name="label">
-            <string>服务资源</string>
+            <string/>
            </attribute>
           </widget>
          </widget>
@@ -386,14 +334,9 @@
           <property name="currentIndex">
            <number>0</number>
           </property>
-          <widget class="QWebEngineView" name="webView1">
+          <widget class="QWebEngineView" name="webView">
            <attribute name="title">
             <string>Tab 1</string>
-           </attribute>
-          </widget>
-          <widget class="QWebEngineView" name="webView2">
-           <attribute name="title">
-            <string>Tab 2</string>
            </attribute>
           </widget>
          </widget>

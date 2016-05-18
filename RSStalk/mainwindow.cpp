@@ -1,21 +1,6 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "ui_addfolder.h"
-#include <QIcon>
-#include <QtWidgets>
-#include <QTranslator>
-#include <QLocale>
-#include <QLibraryInfo>
-#include <QPixmap>
-#include <QLabel>
-#include <QLineEdit>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QSize>
-#include <QListWidget>
-#include <QTreeWidgetItemIterator>
-#include <qDebug>
-#include <QHeaderView>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -25,18 +10,20 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle("RSStalk");
     setWindowIcon(QIcon(":/new/prefix/image/RSStalk.png"));
 
-    createToolBar();//创建工具栏
-
-    setWindowFont();//初始化所有部件的字体
-
-    ui->webView1->load(QUrl("http://www.baidu.com")); //设置界面中的网页加载的网页
-    ui->webView2->load(QUrl("http://sw.scu.edu.cn"));
+    ui->webView->load(QUrl("http://sw.scu.edu.cn")); //设置界面中的网页加载的网页
+    //ui->webView->setZoomFactor(5.6);
 
     ui->splitter->setStretchFactor(0, 2);//优化界面中的分裂窗口
     ui->splitter->setStretchFactor(1, 6);
     ui->splitter->setStretchFactor(2, 4);
-
     ui->treeWidget->setHeaderLabel(QStringLiteral("订阅分类"));
+
+    ui->toolBox->removeItem(0);
+
+    createToolBar();//创建工具栏
+    setWindowFont();//初始化所有部件的字体
+    showParseResultExample();//显示解析的结果主要是treewidget和toolbox中内容的显示
+    //downloadTest();
 
     /*槽函数的连接*/
     connect(ui->newFolderAction, SIGNAL(triggered()), this, SLOT(addFolderActionTriggered()));//新建分类触发
@@ -47,6 +34,175 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::downloadTest()
+{
+    Feed feed("http://www.ruanyifeng.com/blog/atom.xml");
+    qDebug() << feed.getReadMark();
+}
+
+void MainWindow::showParseResultExample()
+{
+    QString AtomFileName = "C:\\Users\\19843\\Desktop\\test\\ATOM\\atom.xml";
+    QString RssFileName = "C:\\Users\\19843\\Desktop\\test\\RSS\\feed.xml";
+    QString newsFileName = "C:\\Users\\19843\\Desktop\\test\\RSS\\ns.xml";
+
+    QStringList feedTitleText_0;
+    QStringList feedTitleText_1;
+    QStringList feedTitleText_2;
+
+    Rss rssfile(RssFileName);
+    feedTitleText_0 << rssfile.getRssTitle();
+    //rssList = qobject_cast<QList<article> >(rssfile.getArtList());
+
+    Atom atomfile(AtomFileName);
+    feedTitleText_1 << atomfile.getAtomTitle();
+    //atomList = qobject_cast<QList<article> >(atomfile.getArtList());
+
+    Rss newsfile(newsFileName);
+    feedTitleText_2 << newsfile.getRssTitle();
+
+    QTreeWidgetItem *item0 = new QTreeWidgetItem(feedTitleText_0, 0);//添加两个treewidget
+    QTreeWidgetItem *item1 = new QTreeWidgetItem(feedTitleText_1, 0);
+    QTreeWidgetItem *item2 = new QTreeWidgetItem(feedTitleText_2, 0);
+    //qDebug() << ui->treeWidget->topLevelItem(0)->text(0);打印出界面中treewidget的第0列，第0个子item
+    ui->treeWidget->topLevelItem(0)->addChild(item0);
+    ui->treeWidget->topLevelItem(0)->addChild(item1);
+    ui->treeWidget->topLevelItem(1)->addChild(item2);
+
+    treeWidgetList.insert(feedTitleText_0.at(0), RssFileName);
+    treeWidgetList.insert(feedTitleText_1.at(0), AtomFileName);
+    treeWidgetList.insert(feedTitleText_2.at(0), newsFileName);
+
+    connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(on_treeWidget_title_clicked(QTreeWidgetItem*, int)));
+
+}
+
+void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
+{
+    if (item->parent())//判断点击的item是否是子Items
+    {
+        QString titleClicked;
+        //titleClicked = ui->treeWidget->currentItem()->text(0);//获取当前点击的文章的标题
+        titleClicked = item->text(column);//获取当前点击的文章的标题
+
+        QString fileName = treeWidgetList[titleClicked];
+
+        QFile feedfile(fileName);
+        if (!feedfile.open(QIODevice::ReadOnly))
+        {
+            qDebug() << "open file failed";
+        }
+
+        XmlParser parser(&feedfile);           //用来判断点击的文章是属于rss还是atom
+
+        if (parser.getFeedKind() == "rss")
+        {
+            Rss rss(fileName);
+
+            QGroupBox *artBox = new QGroupBox;
+            QVBoxLayout *vLayout = new QVBoxLayout(artBox);
+            //vLayout->addStretch(1);
+
+            QList<rssArticle> rssList = rss.getArtList();
+
+            for (int posi = 0; posi < rssList.size(); posi++)
+            {
+                MyToolButton *titleButton = new MyToolButton;
+                titleButton->feedtitle = titleClicked;
+                titleButton->pos = posi;
+                titleButton->setAutoRaise(true);
+                titleButton->setText(rssList[posi].title);
+
+                vLayout->addWidget(titleButton);
+
+                connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
+            }
+
+            ui->toolBox->addItem(artBox, titleClicked);
+        }
+        else if (parser.getFeedKind() == "atom")
+        {
+            Atom atom(fileName);
+
+            QGroupBox *artBox = new QGroupBox;
+            QVBoxLayout *vLayout = new QVBoxLayout(artBox);
+
+            QList<atomArticle> atomList = atom.getArtList();
+
+            for (int posi = 0; posi < atomList.size(); posi++)
+            {
+                MyToolButton *titleButton = new MyToolButton;
+                titleButton->feedtitle = titleClicked;
+                titleButton->pos = posi;
+                titleButton->setAutoRaise(true);
+                titleButton->setText(atomList[posi].title);
+
+                vLayout->addWidget(titleButton);
+
+                connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
+            }
+
+            ui->toolBox->addItem(artBox, titleClicked);
+        }
+
+        feedfile.close();
+    }
+}
+
+void MyToolButton::mousePressEvent(QMouseEvent * event)
+{
+    if (event->button() == Qt::LeftButton)
+    {
+        emit myclicked(feedtitle, pos);
+    }
+    QToolButton::mousePressEvent(event);
+}
+
+void MainWindow::showArticleContent(QString title, int pos)
+{
+    //qDebug() << title << " " << pos;//测试成功
+    QString fileName = treeWidgetList[title];
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly))
+        qDebug() << "open file failed in showArticleContent";
+
+    XmlParser parser(&file);
+    if(parser.getFeedKind() == "rss")
+    {
+        Rss rss(fileName);
+
+        QList<rssArticle> rssList = rss.getArtList();
+        //qDebug() << rssList[pos].description;//获取内容成功，但是还需要解析
+
+        if (rssList[pos].link == NULL)
+            qDebug() << "there is no link info";
+        else
+        {
+            QUrl articleUrl(rssList[pos].link); //让界面中的webview加载网页
+            ui->webView->load(articleUrl);
+        }
+    }
+    else if (parser.getFeedKind() == "atom")
+    {
+        Atom atom(fileName);
+
+        QList<atomArticle> atomList = atom.getArtList();
+        //qDebug() << atomList[pos].content;//获取内容成功，但是还需要解析
+
+        if (atomList[pos].link == NULL)
+        {
+            qDebug() << "there is no link info";
+        }
+        else
+        {
+            QUrl articleUrl(atomList[pos].link);
+            ui->webView->load(articleUrl);
+        }
+    }
+
 }
 
 void MainWindow::createToolBar()
@@ -77,6 +233,25 @@ void MainWindow::setWindowFont()
     /*设置界面左边treewidget的字体*/
     QFont treeWidgetFont("宋体", 10);
     ui->treeWidget->setFont(treeWidgetFont);
+
+    /*设置QToolBox字体*/
+    QFont toolBoxFont("宋体", 10);
+    ui->toolBox->setFont(toolBoxFont);
+
+    /*设置QToolBar字体*/
+    QFont toolBarFont("宋体", 10);
+    fileTool->setFont(toolBarFont);
+    editTool->setFont(toolBarFont);
+    doToolBar->setFont(toolBarFont);
+
+    /*设置左下角QToolButton字体*/
+    QFont toolBtnFont("宋体", 10);
+    ui->IRCToolBtn->setFont(toolBtnFont);
+    ui->feedbackToolBtn->setFont(toolBtnFont);
+    ui->releaseToolBtn->setFont(toolBtnFont);
+    ui->shareToolBtn->setFont(toolBtnFont);
+    ui->webToolBtn->setFont(toolBtnFont);
+
 }
 
 void MainWindow::addFolderActionTriggered()
@@ -90,27 +265,33 @@ void MainWindow::addFolderActionTriggered()
 
 void MainWindow::addSubcriptionActionTriggered()
 {
-    QWizard *wizard = new QWizard;
+    QFont wizardFont("宋体", 10);
+
+    wizard = new QWizard;
     wizard->setWindowTitle(QStringLiteral("新建推送"));
+    wizard->setFont(wizardFont);
+    wizard->setWizardStyle(QWizard::ModernStyle);
+    //wizard->setOption(QWizard::HaveHelpButton, true);//显示帮助按钮
+
 
     /*初始化新建推送向导的第一页*/
-    QWizardPage *page1 = new QWizardPage;
+    page1 = new QWizardPage;
     page1->setTitle(QStringLiteral("新建一个推送"));
 
-    QLabel *urlLabel = new QLabel;
+    urlLabel = new QLabel;
     urlLabel->setText(QStringLiteral("请输入推送的URL地址，我们会对其进行解析"));
     urlLabel->setWordWrap(true);
 
-    QLabel *tipsLabel = new QLabel;
+    tipsLabel = new QLabel;
     tipsLabel->setText(QStringLiteral("温馨提示：提供RSS服务的网页往往有个类似左边图片的图标，点击后复制网址就OK啦！"));
     tipsLabel->setWordWrap(true);
 
-    QLabel *pixLabel = new QLabel;
+    pixLabel = new QLabel;
     QPixmap pix("F:\\Qt_workplace\\RSStalk\\RSStalk\\RSStalk\\image\\RSS.png");
     pixLabel->setPixmap(pix);
     pixLabel->resize(QSize(pix.width(), pix.height()));
 
-    QLineEdit *urlLineEdit = new QLineEdit;
+    urlLineEdit = new QLineEdit;
     urlLineEdit->setText(QStringLiteral("http://"));
 
     QVBoxLayout *vLayout = new QVBoxLayout;
@@ -125,19 +306,19 @@ void MainWindow::addSubcriptionActionTriggered()
     page1->setLayout(hLayout);//设置page1的布局
 
     /*初始化新建推送向导的第二页*/
-    QWizardPage *page2 = new QWizardPage;
+    page2 = new QWizardPage;
     page2->setTitle(QStringLiteral("给新的订阅取个名字吧"));
 
-    QLabel *nameLabel = new QLabel;
+    nameLabel = new QLabel;
     nameLabel->setText(QStringLiteral("请输入这个订阅的标题："));
 
-    QLineEdit *nameLineEdit = new QLineEdit;
+    nameLineEdit = new QLineEdit;
 
-    QLabel *chooseLabel = new QLabel;
+    chooseLabel = new QLabel;
     chooseLabel->setText(QStringLiteral("请选择一个分类文件夹："));
 
     /*将这个treewidget与主界面的treewidget内容同步*/
-    QTreeWidget *folderTreeWidget = new QTreeWidget;
+    folderTreeWidget = new QTreeWidget;
     folderTreeWidget->setHeaderLabel(QStringLiteral("订阅列表"));
     folderTreeWidget->setColumnCount(1);
     QHeaderView *header = new QHeaderView(Qt::Horizontal, folderTreeWidget);
@@ -172,11 +353,11 @@ void MainWindow::addSubcriptionActionTriggered()
         folderTreeWidget->addTopLevelItem(item);
     }
 
-    QPushButton *newFolderBtn = new QPushButton;
+    newFolderBtn = new QPushButton;
     newFolderBtn->setText(QStringLiteral("新建文件夹"));
 
     QPixmap pixInPage2("F:\\Qt_workplace\\RSStalk\\RSStalk\\RSStalk\\image\\RSS.png");
-    QLabel *pixLabelInPage2 = new QLabel;
+    pixLabelInPage2 = new QLabel;
     pixLabelInPage2->setPixmap(pixInPage2);
 
     QHBoxLayout *bottomLayout = new QHBoxLayout;
@@ -202,16 +383,16 @@ void MainWindow::addSubcriptionActionTriggered()
 
     page2->setLayout(mainHLayout);
 
-    /*初始化新建推送向导的第二页*/
-    QWizardPage *page3 = new QWizardPage;
+    /*初始化新建推送向导的第三页*/
+    page3 = new QWizardPage;
     page3->setTitle(QStringLiteral("完成"));
 
-    QLabel *finishLabel = new QLabel;
+    finishLabel = new QLabel;
     finishLabel->setText(QStringLiteral("点击finish完成新建订阅，我们将为您更新您的订阅列表"));
-    finishLabel->setWordWrap(true);
+    //finishLabel->setWordWrap(true);
 
     QPixmap pixInPage3("F:\\Qt_workplace\\RSStalk\\RSStalk\\RSStalk\\image\\RSS.png");
-    QLabel *pixLabelInPage3 = new QLabel;
+    pixLabelInPage3 = new QLabel;
     pixLabelInPage3->setPixmap(pixInPage3);
 
     QHBoxLayout *finishLayout = new QHBoxLayout;
@@ -226,4 +407,35 @@ void MainWindow::addSubcriptionActionTriggered()
     wizard->resize(QSize(750, 450));
     wizard->show();
 
+    wizard->setButtonText(QWizard::BackButton, QStringLiteral("上一步"));//设置向导中按钮的文字
+    wizard->setButtonText(QWizard::NextButton, QStringLiteral("下一步"));
+    wizard->setButtonText(QWizard::CancelButton, QStringLiteral("取消"));
+
+
+    if (this->wizard->currentPage()->nextId() == 0)
+    {
+        //qDebug() << this->wizard->currentPage()->nextId();
+        QAbstractButton *nextBtn = this->wizard->button(QWizard::NextButton);//获取QWizard向导中的下一步按钮
+        if (this->urlLineEdit->text() != NULL)
+        {
+            connect(nextBtn, SIGNAL(clicked(bool)), this, SLOT(addSubcription()));
+        }
+    }
+
+    /*连接新建推送的槽函数*/
+    connect(newFolderBtn, SIGNAL(clicked()), this, SLOT(addFolderActionTriggered()));//在向导中新建文件夹
+
 }
+
+void MainWindow::addSubcription()
+{
+    qDebug() << "successful access to addSubcription";
+
+    urlFrInput = "http://blog.zhaojie.me/rss";
+
+    DownloadManager manager;
+    manager.doDownload(urlFrInput);
+}
+
+
+
