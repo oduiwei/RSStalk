@@ -11,7 +11,6 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowIcon(QIcon(":/new/prefix/image/RSStalk.png"));
 
     ui->webView->load(QUrl("http://sw.scu.edu.cn")); //设置界面中的网页加载的网页
-    //ui->webView->setZoomFactor(5.6);
 
     ui->splitter->setStretchFactor(0, 2);//优化界面中的分裂窗口
     ui->splitter->setStretchFactor(1, 6);
@@ -19,6 +18,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->treeWidget->setHeaderLabel(QStringLiteral("订阅分类"));
 
     ui->toolBox->removeItem(0);
+
+    ui->tabWidget->setTabText(0, QStringLiteral("软件学院"));
 
     createToolBar();//创建工具栏
     setWindowFont();//初始化所有部件的字体
@@ -28,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent) :
     /*槽函数的连接*/
     connect(ui->newFolderAction, SIGNAL(triggered()), this, SLOT(addFolderActionTriggered()));//新建分类触发
     connect(ui->newSubscriptionAcion, SIGNAL(triggered()), this, SLOT(addSubcriptionActionTriggered()));//新建推送触发
+    connect(ui->aheadToolBtn, SIGNAL(clicked(bool)), this, SLOT(lineEditUrlEntered()));
+    connect(ui->webEditLine, SIGNAL(editingFinished()), this, SLOT(lineEditUrlEntered()));
 
 }
 
@@ -120,7 +123,16 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
                 connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
             }
 
-            ui->toolBox->addItem(artBox, titleClicked);
+            if (toolBoxHasRepeatChild(titleClicked))//当点击的订阅在toolbox中存在的时候获取存在的index并设置当前index为index
+            {
+                int index = childItemIndexInToolBox(titleClicked);
+                ui->toolBox->setCurrentIndex(index);
+            }
+            else
+            {
+                ui->toolBox->addItem(artBox, titleClicked);
+                ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
+            }
         }
         else if (parser.getFeedKind() == "atom")
         {
@@ -144,11 +156,43 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
                 connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
             }
 
-            ui->toolBox->addItem(artBox, titleClicked);
+            if (toolBoxHasRepeatChild(titleClicked))
+            {
+                int index = childItemIndexInToolBox(titleClicked);
+                ui->toolBox->setCurrentIndex(index);
+            }
+            else
+            {
+                ui->toolBox->addItem(artBox, titleClicked);
+                ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
+            }
         }
 
         feedfile.close();
     }
+}
+
+bool MainWindow::toolBoxHasRepeatChild(QString title)//判断新建的item是否已经存在toolbox中
+{
+    int childNum = ui->toolBox->count();
+    for (int i = 0; i < childNum; i++)
+    {
+        if (ui->toolBox->itemText(i) == title)
+            return true;
+    }
+
+    return false;
+}
+
+int MainWindow::childItemIndexInToolBox(QString title)//获取重复Item的index
+{
+    int childNum = ui->toolBox->count();
+    for (int i = 0; i < childNum; i++)
+    {
+        if (ui->toolBox->itemText(i) == title)
+            return i;
+    }
+    return 0;
 }
 
 void MyToolButton::mousePressEvent(QMouseEvent * event)
@@ -183,6 +227,7 @@ void MainWindow::showArticleContent(QString title, int pos)
         {
             QUrl articleUrl(rssList[pos].link); //让界面中的webview加载网页
             ui->webView->load(articleUrl);
+            ui->tabWidget->setTabText(0, rssList[pos].title);
         }
     }
     else if (parser.getFeedKind() == "atom")
@@ -198,8 +243,9 @@ void MainWindow::showArticleContent(QString title, int pos)
         }
         else
         {
-            QUrl articleUrl(atomList[pos].link);
+            QUrl articleUrl(atomList[pos].link);//界面中的webview加载网页
             ui->webView->load(articleUrl);
+            ui->tabWidget->setTabText(0, atomList[pos].title);
         }
     }
 
@@ -435,6 +481,19 @@ void MainWindow::addSubcription()
 
     DownloadManager manager;
     manager.doDownload(urlFrInput);
+}
+
+void MainWindow::lineEditUrlEntered()
+{
+    QString url;
+    if (ui->webEditLine->text() != NULL)
+    {
+        url = "https://" + ui->webEditLine->text();
+    }
+    else
+        url = "http://sw.scu.edu.cn";
+
+    ui->webView->load(url);
 }
 
 

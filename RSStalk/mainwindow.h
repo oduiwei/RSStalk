@@ -55,6 +55,9 @@ public:
 
     void downloadTest();//测试downloadManager
 
+    bool toolBoxHasRepeatChild(QString);
+    int childItemIndexInToolBox(QString);
+
 private:
     Ui::MainWindow *ui;
 
@@ -91,6 +94,7 @@ private:
 private slots:
     void addFolderActionTriggered();
     void addSubcriptionActionTriggered();
+    void lineEditUrlEntered();
     void on_treeWidget_title_clicked(QTreeWidgetItem*, int);//当点击treewidget中的文章标题后
 
 public slots:
