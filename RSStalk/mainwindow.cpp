@@ -30,7 +30,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->newSubscriptionAcion, SIGNAL(triggered()), this, SLOT(addSubcriptionActionTriggered()));//新建推送触发
     connect(ui->aheadToolBtn, SIGNAL(clicked(bool)), this, SLOT(lineEditUrlEntered()));//输入网址显示网页的两个槽函数
     connect(ui->webEditLine, SIGNAL(editingFinished()), this, SLOT(lineEditUrlEntered()));
-
+    //点击treewidget中的item后，显示文章列表
+    connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(on_treeWidget_title_clicked(QTreeWidgetItem*, int)));
 }
 
 MainWindow::~MainWindow()
@@ -38,6 +39,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+/*添加默认的几个订阅，供展示用，后面可以删除*/
 void MainWindow::showParseResultExample()
 {
     QString AtomFileName = "C:\\Users\\19843\\Desktop\\test\\ATOM\\atom.xml";
@@ -67,14 +69,12 @@ void MainWindow::showParseResultExample()
     ui->treeWidget->topLevelItem(0)->addChild(item1);
     ui->treeWidget->topLevelItem(1)->addChild(item2);
 
-    treeWidgetList.insert(feedTitleText_0.at(0), RssFileName);
+    treeWidgetList.insert(feedTitleText_0.at(0), RssFileName);//给map赋值，能够通过标题名字来找到文件地址
     treeWidgetList.insert(feedTitleText_1.at(0), AtomFileName);
     treeWidgetList.insert(feedTitleText_2.at(0), newsFileName);
-
-    connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(on_treeWidget_title_clicked(QTreeWidgetItem*, int)));
-
 }
 
+/*槽函数：当点击treewidget中的某个订阅时，在toolbox中显示该订阅所有的文章标题*/
 void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
 {
     if (item->parent())//判断点击的item是否是子Items
@@ -165,6 +165,7 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
     }
 }
 
+/*判断新建的item是否已经存在在toolbox中*/
 bool MainWindow::toolBoxHasRepeatChild(QString title)//判断新建的item是否已经存在toolbox中
 {
     int childNum = ui->toolBox->count();
@@ -177,7 +178,8 @@ bool MainWindow::toolBoxHasRepeatChild(QString title)//判断新建的item是否
     return false;
 }
 
-int MainWindow::childItemIndexInToolBox(QString title)//获取重复Item的index
+/*获取toolbox中和点击的订阅相同的item的Index*/
+int MainWindow::childItemIndexInToolBox(QString title)
 {
     int childNum = ui->toolBox->count();
     for (int i = 0; i < childNum; i++)
@@ -188,15 +190,7 @@ int MainWindow::childItemIndexInToolBox(QString title)//获取重复Item的index
     return 0;
 }
 
-void MyToolButton::mousePressEvent(QMouseEvent * event)
-{
-    if (event->button() == Qt::LeftButton)
-    {
-        emit myclicked(feedtitle, pos);
-    }
-    QToolButton::mousePressEvent(event);
-}
-
+/*在右边wenengineview中加载点击文章的内容*/
 void MainWindow::showArticleContent(QString title, int pos)
 {
     //qDebug() << title << " " << pos;//测试成功
@@ -244,6 +238,7 @@ void MainWindow::showArticleContent(QString title, int pos)
 
 }
 
+/*创建工具栏*/
 void MainWindow::createToolBar()
 {
     //文件工具栏
@@ -267,6 +262,7 @@ void MainWindow::createToolBar()
     doToolBar->addAction(ui->undoAction);
 }
 
+/*设置界面中所有部件的字体*/
 void MainWindow::setWindowFont()
 {
     /*设置界面左边treewidget的字体*/
@@ -293,6 +289,7 @@ void MainWindow::setWindowFont()
 
 }
 
+/*新建文件夹的界面*/
 void MainWindow::addFolderActionTriggered()
 {
     QDialog *dialog = new QDialog;
@@ -302,6 +299,7 @@ void MainWindow::addFolderActionTriggered()
     dialog->show();
 }
 
+/*新建推送向导的界面*/
 void MainWindow::addSubcriptionActionTriggered()
 {
     QFont wizardFont("宋体", 10);
@@ -423,6 +421,8 @@ void MainWindow::addSubcriptionActionTriggered()
 
     page2->setLayout(mainHLayout);
 
+    connect(newFolderBtn, SIGNAL(clicked()), this, SLOT(addFolderActionTriggered()));//在向导中新建文件夹
+
     /*初始化新建推送向导的第三页*/
     page3 = new QWizardPage;
     page3->setTitle(QStringLiteral("完成"));
@@ -456,10 +456,11 @@ void MainWindow::addSubcriptionActionTriggered()
     connect(finishBtn, SIGNAL(clicked(bool)), this, SLOT(addSubcription()));//点击完成时新建推送
 
     /*连接新建推送的槽函数*/
-    connect(newFolderBtn, SIGNAL(clicked()), this, SLOT(addFolderActionTriggered()));//在向导中新建文件夹
+    //connect(newFolderBtn, SIGNAL(clicked()), this, SLOT(addFolderActionTriggered()));//在向导中新建文件夹
 
 }
 
+/*新建推送，负责下载输入URL的文件和在treewidget中显示标题*/
 void MainWindow::addSubcription()
 {
     //qDebug() << "enter addsubscription";
@@ -467,10 +468,69 @@ void MainWindow::addSubcription()
         return;
 
     QUrl urlAddr(urlLineEdit->text());
-    Feed *newFeed = new Feed(urlAddr);
+    Feed *newFeed = new Feed(urlAddr);//下载这个文件
+
+    /*等待文件下载,这段代码很重要，如果不写，获取的文件地址是空的，因为如果文件没下载完，文件路径为空*/
+    QTime t;
+    t.start();
+    while(!newFeed->alreadyDownload)
+        QCoreApplication::processEvents();
+
+    QString filename = newFeed->fileAddr;
+
+    if (folderTreeWidget->currentItem()->parent())
+    {
+        qDebug() << "foldertreewidget clicked wrong";
+        return;
+    }
+
+    QString currentTopLevelItemName = folderTreeWidget->currentItem()->text(0);//当前点击的toplevelitem的标题
+    int index = getCurrentToplevelItemIndex(currentTopLevelItemName);//当前点击的toplevelitem的index
+
+    QFile file(filename);
+    if (!file.open(QIODevice::ReadOnly))
+        qDebug() << "open the downloaded file failed";
+    XmlParser parser(&file);
+    if (parser.getFeedKind() == "atom")
+    {
+        Atom atomFeed(filename);
+
+        QStringList textlist;
+        textlist << atomFeed.getAtomTitle();
+
+        QTreeWidgetItem *item = new QTreeWidgetItem(textlist, 0);
+        ui->treeWidget->topLevelItem(index)->addChild(item);
+
+        treeWidgetList.insert(textlist.at(0), filename);
+    }
+    else if (parser.getFeedKind() == "rss")
+    {
+        Rss rssFeed(filename);
+
+        QStringList textlist;
+        textlist << rssFeed.getRssTitle();
+
+        QTreeWidgetItem *item = new QTreeWidgetItem(textlist, 0);
+        ui->treeWidget->topLevelItem(index)->addChild(item);
+
+        treeWidgetList.insert(textlist.at(0), filename);
+    }
 
 }
 
+/*获取向导中folderwidget当前点击的toplevelitem的index*/
+int MainWindow::getCurrentToplevelItemIndex(QString name)
+{
+    int count = ui->treeWidget->topLevelItemCount();
+    for (int i = 0; i < count; i++)
+    {
+        if (ui->treeWidget->topLevelItem(i)->text(0) == name)
+            return i;
+    }
+    return 0;
+}
+
+/*槽函数：当右上角的网页输入框输入字符串时候，加载对应网页*/
 void MainWindow::lineEditUrlEntered()
 {
     QString url;
@@ -482,6 +542,16 @@ void MainWindow::lineEditUrlEntered()
         url = "http://sw.scu.edu.cn";
 
     ui->webView->load(url);
+}
+
+/*重载toolbutton的mousePressEvent函数，点击后发送myclicked信号*/
+void MyToolButton::mousePressEvent(QMouseEvent * event)
+{
+    if (event->button() == Qt::LeftButton)
+    {
+        emit myclicked(feedtitle, pos);
+    }
+    QToolButton::mousePressEvent(event);
 }
 
 

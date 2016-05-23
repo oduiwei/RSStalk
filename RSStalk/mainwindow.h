@@ -31,6 +31,7 @@
 #include <QHeaderView>
 #include <QMap>
 #include <QToolButton>
+#include <QTime>
 #include "feed.h"
 #include "rss.h"
 #include "atom.h"
@@ -57,6 +58,8 @@ public:
 
     bool toolBoxHasRepeatChild(QString);
     int childItemIndexInToolBox(QString);
+
+    int getCurrentToplevelItemIndex(QString);
 
 private:
     Ui::MainWindow *ui;

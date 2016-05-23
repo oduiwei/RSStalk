@@ -9,9 +9,17 @@ Feed::Feed()
 
 Feed::Feed(QUrl url)
 {
-    DownloadManager *manager = new DownloadManager;//必须要new一个，这样才能放到堆中，只有程序退出这些数据才会删除，防止
+    DownloadManager *download = new DownloadManager;//必须要new一个，这样才能放到堆中，只有程序退出这些数据才会删除，防止
     //后面的qnetworkaccessmanager finished信号不能触发
-    manager->doDownload(url);
+    download->doDownload(url);
+    connect(download, SIGNAL(downloadFinishedSignal(QString)), this, SLOT(setFileAddr(QString)));
+}
+
+void Feed::setFileAddr(QString addr)
+{
+    QFileInfo info(addr);
+    fileAddr = info.absoluteFilePath();
+    alreadyDownload = true;
 }
 
 QString Feed::getTitle()
@@ -52,6 +60,7 @@ DownloadManager::DownloadManager()
     //qDebug() << "enter 1";
     manager = new QNetworkAccessManager(this);
     connect(manager, SIGNAL(finished(QNetworkReply*)),this, SLOT(downloadFinished(QNetworkReply*)));
+    connect(this, SIGNAL(downloadFinishedSignal()), this, SLOT(setFileAddrSlot()));
 }
 
 void DownloadManager::doDownload(const QUrl url)
@@ -60,8 +69,8 @@ void DownloadManager::doDownload(const QUrl url)
     filename = saveFileName(url);
     //qDebug() << filename;
 
-    file = new QFile(filename);
-    if (!file->open(QIODevice::ReadWrite)) {
+    file.setFileName(filename);
+    if (!file.open(QIODevice::ReadWrite)) {
         qDebug() << "open file failed.";
         //return;
     }
@@ -102,30 +111,44 @@ void DownloadManager::downloadFinished(QNetworkReply *reply)
         return;//下载出现错误
     }
 
-    file->write(reply->readAll());
-    file->flush();
-    file->close();
+    file.write(reply->readAll());
+    file.flush();
+    file.close();
     reply->deleteLater();
 
     rename();
+    //qDebug() << newName;
 }
-
 
 /*给下载好的文件重命名，名字为xml文件的标题*/
 void DownloadManager::rename()
 {
-    if (!file->open(QIODevice::ReadWrite))
+    //qDebug() << "enter 5";
+    if (!file.open(QIODevice::ReadWrite))
         return;
-    if (file->size() == 0)
+    if (file.size() == 0)
         return;
 
     //qDebug() << file->size();
-    XmlParser parser(file);
-    QString title = parser.getFeedTitle() + ".xml";
-    file->rename(title);
-    //qDebug() << title;
+    XmlParser parser(&file);
+    newName = parser.getFeedTitle() + ".xml";
+    file.rename(newName);
+    //qDebug() << newName;
 
-    file->close();
+    file.close();
+    emit downloadFinishedSignal(newName);
+}
+
+QString DownloadManager::getFileAddr()//这里会面临一个问题，当文件还没下完时，获取的名字是空的
+{
+    return absoluteAddr;
+}
+
+void DownloadManager::setFileAddrSlot(QString newName)
+{
+    QFileInfo info(newName);
+    absoluteAddr = info.absoluteFilePath();
+    //qDebug() << absoluteAddr;
 }
 
 
