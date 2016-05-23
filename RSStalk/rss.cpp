@@ -2,57 +2,42 @@
 
 Rss::Rss()
 {
-    QString fileName = "C:\\Users\\19843\\Desktop\\test\\RSS\\feed.xml";
+}
+
+Rss::Rss(QString addr)
+{
+    QString fileName = addr;
     this->parseRss(fileName);
 }
 
-Rss::Rss(QString url)
+QString Rss::getRssTitle()
 {
-    QString fileName = url;
-    this->parseRss(fileName);
+    return this->title;
 }
 
-QString Rss::getArticleTitle()
+QString Rss::getRssLink()
 {
-    QString s = "111";
+    return this->url;
+}
 
-    return s;
+QStringList Rss::getArticleTitle()
+{
+    return this->articleTitle;
 }
 
 QStringList Rss::getArticleLink()
 {
-    QStringList sl;
-    QList<QString> l;
-    l.append("111");
-    l.append("222");
-    sl.append(l);
-
-    return sl;
+    return this->articleLink;
 }
 
 QStringList Rss::getArticleDescription()
 {
-    QStringList sl;
-    QList<QString> l;
-    l.append("111");
-    l.append("222");
-    sl.append(l);
-
-    return sl;
+    return this->articleDescription;
 }
 
 QString Rss::getPubDate()
 {
     return this->pubDate;
-}
-
-void Rss::setRssTitle(QString title)
-{
-}
-
-void Rss::setArticleTitle(QString childTitle)
-{
-
 }
 
 void Rss::parseRss(QString fileName)
@@ -70,21 +55,6 @@ void Rss::parseRss(QString fileName)
     file.close();
 }
 
-//void Rss::parseRss(QFile &file)
-//{
-
-//}
-
-void Rss::downLoadRssFile(QString url)
-{
-
-}
-
-void Rss::update(QString url)
-{
-
-}
-
 QList<rssArticle> Rss::getArtList()
 {
     return this->articleList;
@@ -93,9 +63,4 @@ QList<rssArticle> Rss::getArtList()
 int Rss::getArtNum()
 {
     return this->articleList.size();
-}
-
-QString Rss::getRssTitle()
-{
-    return this->title;
 }

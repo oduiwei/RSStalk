@@ -10,17 +10,17 @@ QList<Feed *> FeedList::getFeedList()
     return this->feedList;
 }
 
-void FeedList::addNewFeed(QString name)
+void FeedList::addNewFeed(Feed newFeed)
 {
 
 }
 
-void FeedList::deleteFeed()
+void FeedList::deleteFeed(int index)
 {
 
 }
 
-void FeedList::renameFeed(QString newName)
+void FeedList::renameFeed(int index, QString name)
 {
 
 }

@@ -7,10 +7,11 @@ Feed::Feed()
 
 }
 
-Feed::Feed(QString url)
+Feed::Feed(QUrl url)
 {
-    DownloadManager manager;
-    manager.doDownload(url);
+    DownloadManager *manager = new DownloadManager;//必须要new一个，这样才能放到堆中，只有程序退出这些数据才会删除，防止
+    //后面的qnetworkaccessmanager finished信号不能触发
+    manager->doDownload(url);
 }
 
 QString Feed::getTitle()
@@ -48,19 +49,30 @@ void Feed::setReadMark(bool readOrNot)
 /*初始化DownlaodManager类*/
 DownloadManager::DownloadManager()
 {
-    connect(&manager, SIGNAL(finished(QNetworkReply*)),this, SLOT(downloadFinished(QNetworkReply*)));//当回复完成的时候，下载完成
+    //qDebug() << "enter 1";
+    manager = new QNetworkAccessManager(this);
+    connect(manager, SIGNAL(finished(QNetworkReply*)),this, SLOT(downloadFinished(QNetworkReply*)));
 }
 
-void DownloadManager::doDownload(const QUrl &url)
+void DownloadManager::doDownload(const QUrl url)
 {
+    //qDebug() << "enter 2";
+    filename = saveFileName(url);
+    //qDebug() << filename;
+
+    file = new QFile(filename);
+    if (!file->open(QIODevice::ReadWrite)) {
+        qDebug() << "open file failed.";
+        //return;
+    }
+
     QNetworkRequest request(url);
-    QNetworkReply *reply = manager.get(request);
-
-    currentDownloads.append(reply);
+    reply = manager->get(request);
 }
 
-QString DownloadManager::saveFileName(const QUrl &url)
+QString DownloadManager::saveFileName(QUrl url)
 {
+    //qDebug() << "enter 3";
     QString path = url.path();
     QString basename = QFileInfo(path).fileName();
 
@@ -77,43 +89,43 @@ QString DownloadManager::saveFileName(const QUrl &url)
         basename += QString::number(i);
     }
 
-    qDebug() << basename;
+    //qDebug() << basename;
     return basename;
-}
-
-bool DownloadManager::saveToDisk(const QString &filename, QIODevice *data)
-{
-    QFile file(filename);
-    if (!file.open(QIODevice::WriteOnly)) {
-        return false;
-    }
-
-    file.write(data->readAll());
-    file.close();
-
-    return true;
 }
 
 void DownloadManager::downloadFinished(QNetworkReply *reply)
 {
-    QUrl url = reply->url();
-    if (reply->error()) {
+    //qDebug() << "enter 4";
+    if (reply->error())
+    {
+        qDebug() << "download error.";
         return;//下载出现错误
-    } else {
-        QString filename = saveFileName(url);
-        if (saveToDisk(filename, reply))
-//            printf("Download of %s succeeded (saved to %s)\n",
-//                   url.toEncoded().constData(), qPrintable(filename));
-            qDebug() << "downloadSuccess";
     }
 
-    currentDownloads.removeAll(reply);//移除reply
+    file->write(reply->readAll());
+    file->flush();
+    file->close();
     reply->deleteLater();
 
-    if (currentDownloads.isEmpty())
-        //所有的文件都下载完了
-        //QCoreApplication::instance()->quit();
-        qDebug() << "download all";
+    rename();
+}
+
+
+/*给下载好的文件重命名，名字为xml文件的标题*/
+void DownloadManager::rename()
+{
+    if (!file->open(QIODevice::ReadWrite))
+        return;
+    if (file->size() == 0)
+        return;
+
+    //qDebug() << file->size();
+    XmlParser parser(file);
+    QString title = parser.getFeedTitle() + ".xml";
+    file->rename(title);
+    //qDebug() << title;
+
+    file->close();
 }
 
 

@@ -7,32 +7,27 @@ class Atom : public Feed
 {
 public:
     Atom();
-    Atom(QString url);
+    Atom(QString addr);
 
-    QString getAtomTitle();
-    QString getAtomLink();
-    QString getArticleTitle();
-    QStringList getArticleLink();
-    QStringList getArticleSummary();
-    QString getUpdatedTime();
+    QString getAtomTitle();//获取atom文件的标题
+    QString getAtomLink();//获取atom文件的网址
+    QStringList getArticleTitle();//获取atom文件中所有文章的标题
+    QStringList getArticleLink();//获取atom文件中所有文章的网址
+    QStringList getArticleSummary();//获取atom文件中所有文章的内容
+    QString getUpdatedTime();//获取atom文件的最新更新时间
 
-    QList<atomArticle> getArtList();
-    int getArtNum();
+    QList<atomArticle> getArtList();//获取atom文件的文件链表
+    int getArtNum();//获取atom文件中文章的数目
 
-    void setAtomTitle(QString title);
-    void setArticleTitle(QString childTitle);
-
-    void parseAtom(QString fileName);
-    void downLoadAtomFile(QString url);
-    void update(QString url);
+    void parseAtom(QString fileName);//解析这个atom文件，初始化所有属性
 
 private:
-    QStringList articleTitle;
-    QStringList articleLink;
-    QStringList aritcleSummary;
-    QString updatedTime;
+    QStringList articleTitle;//一个atom文件中所有文章的标题
+    QStringList articleLink;//一个atom文件中所有文章的网址
+    QStringList articleSummary;//一个atom文件中所有文章的内容
+    QString updatedTime;//一个atom文件的最新更新时间
 
-    QList<atomArticle> articleList;
+    QList<atomArticle> articleList;//atom文件的文章的链表
 };
 
 #endif // ATOM_H

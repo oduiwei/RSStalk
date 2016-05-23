@@ -11,14 +11,15 @@ public:
 
     QList<Feed *> getFeedList();
 
-    void addNewFeed(QString name);
-    void deleteFeed();
-    void renameFeed(QString newName);
+    void addNewFeed(Feed);
+    void deleteFeed(int);
+    void renameFeed(int, QString);
 
     bool getFavoriteMark();
     void setFavoriteMark(bool favorite);
 
 private:
+    QString listName;
     QList<Feed *> feedList;
     bool favoriteMark;
 };

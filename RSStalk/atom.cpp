@@ -2,14 +2,11 @@
 
 Atom::Atom()
 {
-    QString fileName = "C:\\Users\\19843\\Desktop\\test\\ATOM\\atom.xml";
-    this->parseAtom(fileName);
 }
 
-Atom::Atom(QString urlt)
+Atom::Atom(QString addr)
 {
-    //this->url = urlt;
-    QString fileName = urlt;
+    QString fileName = addr;
     this->parseAtom(fileName);
 }
 
@@ -20,55 +17,27 @@ QString Atom::getAtomTitle()
 
 QString Atom::getAtomLink()
 {
-    return this->getUrl();
+    return this->url;
 }
 
-QString Atom::getArticleTitle()
+QStringList Atom::getArticleTitle()
 {
-    QString s = "111";
-    return s;
+    return this->articleTitle;
 }
 
 QStringList Atom::getArticleLink()
 {
-    QStringList sl;
-    QList<QString> l;
-    l.append("111");
-    l.append("222");
-    sl.append(l);
-
-    return sl;
+    return this->articleLink;
 }
 
 QStringList Atom::getArticleSummary()
 {
-    QStringList sl;
-    QList<QString> l;
-    l.append("111");
-    l.append("222");
-    sl.append(l);
-
-    return sl;
+    return this->articleSummary;
 }
 
 QString Atom::getUpdatedTime()
 {
     return this->updatedTime;
-}
-
-void Atom::setAtomTitle(QString title)
-{
-
-}
-
-void Atom::setArticleTitle(QString childTitle)
-{
-
-}
-
-void Atom::update(QString url)
-{
-
 }
 
 void Atom::parseAtom(QString fileName)

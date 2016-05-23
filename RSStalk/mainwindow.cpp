@@ -24,12 +24,11 @@ MainWindow::MainWindow(QWidget *parent) :
     createToolBar();//创建工具栏
     setWindowFont();//初始化所有部件的字体
     showParseResultExample();//显示解析的结果主要是treewidget和toolbox中内容的显示
-    //downloadTest();
 
     /*槽函数的连接*/
     connect(ui->newFolderAction, SIGNAL(triggered()), this, SLOT(addFolderActionTriggered()));//新建分类触发
     connect(ui->newSubscriptionAcion, SIGNAL(triggered()), this, SLOT(addSubcriptionActionTriggered()));//新建推送触发
-    connect(ui->aheadToolBtn, SIGNAL(clicked(bool)), this, SLOT(lineEditUrlEntered()));
+    connect(ui->aheadToolBtn, SIGNAL(clicked(bool)), this, SLOT(lineEditUrlEntered()));//输入网址显示网页的两个槽函数
     connect(ui->webEditLine, SIGNAL(editingFinished()), this, SLOT(lineEditUrlEntered()));
 
 }
@@ -37,12 +36,6 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::downloadTest()
-{
-    Feed feed("http://www.ruanyifeng.com/blog/atom.xml");
-    qDebug() << feed.getReadMark();
 }
 
 void MainWindow::showParseResultExample()
@@ -359,6 +352,7 @@ void MainWindow::addSubcriptionActionTriggered()
     nameLabel->setText(QStringLiteral("请输入这个订阅的标题："));
 
     nameLineEdit = new QLineEdit;
+    nameLineEdit->setText(QStringLiteral("//不填会默认为订阅文件的标题哦！"));
 
     chooseLabel = new QLabel;
     chooseLabel->setText(QStringLiteral("请选择一个分类文件夹："));
@@ -456,17 +450,10 @@ void MainWindow::addSubcriptionActionTriggered()
     wizard->setButtonText(QWizard::BackButton, QStringLiteral("上一步"));//设置向导中按钮的文字
     wizard->setButtonText(QWizard::NextButton, QStringLiteral("下一步"));
     wizard->setButtonText(QWizard::CancelButton, QStringLiteral("取消"));
+    wizard->setButtonText(QWizard::FinishButton, QStringLiteral("完成"));
 
-
-    if (this->wizard->currentPage()->nextId() == 0)
-    {
-        //qDebug() << this->wizard->currentPage()->nextId();
-        QAbstractButton *nextBtn = this->wizard->button(QWizard::NextButton);//获取QWizard向导中的下一步按钮
-        if (this->urlLineEdit->text() != NULL)
-        {
-            connect(nextBtn, SIGNAL(clicked(bool)), this, SLOT(addSubcription()));
-        }
-    }
+    QAbstractButton *finishBtn = this->wizard->button(QWizard::FinishButton);
+    connect(finishBtn, SIGNAL(clicked(bool)), this, SLOT(addSubcription()));//点击完成时新建推送
 
     /*连接新建推送的槽函数*/
     connect(newFolderBtn, SIGNAL(clicked()), this, SLOT(addFolderActionTriggered()));//在向导中新建文件夹
@@ -475,12 +462,13 @@ void MainWindow::addSubcriptionActionTriggered()
 
 void MainWindow::addSubcription()
 {
-    qDebug() << "successful access to addSubcription";
+    //qDebug() << "enter addsubscription";
+    if (this->urlLineEdit->text() == "http://" || this->folderTreeWidget->currentItem() == NULL)//输入不正确
+        return;
 
-    urlFrInput = "http://blog.zhaojie.me/rss";
+    QUrl urlAddr(urlLineEdit->text());
+    Feed *newFeed = new Feed(urlAddr);
 
-    DownloadManager manager;
-    manager.doDownload(urlFrInput);
 }
 
 void MainWindow::lineEditUrlEntered()

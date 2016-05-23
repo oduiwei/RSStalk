@@ -11,9 +11,9 @@ public:
 
     QList<FeedList *> getFolderList();
 
-    void addNewFolder(QString folderName);
-    void deleteFolder();
-    void renameFolder(QString newName);
+    void addNewFolder(FeedList);
+    void deleteFolder(int);
+    void renameFolder(int, QString);
 
 private:
     QList<FeedList *> folderList;

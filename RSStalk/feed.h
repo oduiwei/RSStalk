@@ -23,7 +23,7 @@ class Feed
 {
 public:
     Feed();
-    Feed(QString url);
+    Feed(QUrl url);
     QString getTitle();
     void setTitle(QString string);
 
@@ -42,83 +42,23 @@ public:
 class DownloadManager : public QObject
 {
     Q_OBJECT
-    QNetworkAccessManager manager;
-    QList<QNetworkReply *> currentDownloads;//下载的列表
+private:
+    QNetworkAccessManager *manager;
+    QNetworkReply *reply;
+    QFile *file;
+    QFileInfo fileInfo;
+    QString filename;
 
 public:
     DownloadManager();
-    void doDownload(const QUrl &url);
-    QString saveFileName(const QUrl &url);//给下载好的文件命名
-    bool saveToDisk(const QString &filename, QIODevice *data);
+    void doDownload(QUrl url);
+    QString saveFileName(QUrl url);//给下载好的文件命名
+    void rename();
 
 public slots:
-    //void execute();
-    void downloadFinished(QNetworkReply *reply);
+    void downloadFinished(QNetworkReply*);
 };
 
-//class article : public QObject
-//{
-//    Q_OBJECT
-
-//public:
-//    int id;
-//    QString title;
-//    QString link;
-//    QString updateTime;
-
-////    QString description;
-
-////    QString summary;
-////    QString content;
-
-
-//    article() { }
-//    ~article() { }
-//    article(const article& art)
-//    {
-//        id = art.id;
-//        title = art.title;
-//        link = art.link;
-//        updateTime = art.updateTime;
-
-////        description = art.description;
-
-////        summary = art.summary;
-////        content = art.content;
-//    }
-//};
-
-//class rssArticle : public article
-//{
-//    Q_OBJECT
-//public:
-//    QString description;
-
-//    rssArticle() { }
-//    ~rssArticle() { }
-//    rssArticle(const rssArticle& rss)
-//    {
-//        description = rss.description;
-//    }
-//};
-
-//class atomArticle : public article
-//{
-//    Q_OBJECT
-//public:
-//    QString summary;
-//    QString content;
-
-//    atomArticle() { }
-//    ~atomArticle() { }
-//    atomArticle(const atomArticle& atom)
-//    {
-//        summary = atom.summary;
-//        content = atom.content;
-//    }
-//};
-
-/*发现用结构体来对文章进行分类后，在后面的qmap对应键和值的时候会有麻烦，所以用类来表示*/
 struct rssArticle {
     int id;
     QString title;

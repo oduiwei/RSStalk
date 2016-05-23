@@ -5,17 +5,17 @@ FolderListManager::FolderListManager()
 
 }
 
-void FolderListManager::addNewFolder(QString folderName)
+void FolderListManager::addNewFolder(FeedList newList)
 {
 
 }
 
-void FolderListManager::deleteFolder()
+void FolderListManager::deleteFolder(int index)
 {
 
 }
 
-void FolderListManager::renameFolder(QString newName)
+void FolderListManager::renameFolder(int index, QString name)
 {
 
 }
