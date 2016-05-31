@@ -4,6 +4,7 @@
 #include <QList>
 #include "feed.h"
 
+/*FeedList类负责管理一个文件夹中的订阅*/
 class FeedList
 {
 public:

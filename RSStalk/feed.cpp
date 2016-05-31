@@ -131,7 +131,18 @@ void DownloadManager::rename()
 
     //qDebug() << file->size();
     XmlParser parser(&file);
-    newName = parser.getFeedTitle() + ".xml";
+    QString tempName = parser.getFeedTitle() + ".xml";
+    newName = parser.getFeedTitle();
+
+    if (QFile::exists(tempName)) {
+        //已经存在这个名字，重新命一个名字
+        int i = 1;
+        while (QFile::exists(newName + QString::number(i)))
+            ++i;
+
+        newName += QString::number(i);
+    }
+    newName += ".xml";
     file.rename(newName);
     //qDebug() << newName;
 

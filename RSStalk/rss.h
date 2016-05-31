@@ -5,6 +5,7 @@
 #include <QStringList>
 #include <QFile>
 
+/*Rss类继承于Feed类，负责通过XmlParser类解析Rss文件并提供获取解析结果的接口*/
 class Rss : public Feed
 {
 public:

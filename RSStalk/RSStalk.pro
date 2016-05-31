@@ -33,4 +33,6 @@ FORMS    += mainwindow.ui \
     addfolder.ui
 
 RESOURCES += \
-    feed_files.qrc
+    img.qrc \
+    xmlfile.qrc
+

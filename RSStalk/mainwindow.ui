@@ -48,6 +48,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
+          </property>
           <column>
            <property name="text">
             <string>订阅内容</string>
@@ -222,6 +225,9 @@
             <underline>true</underline>
            </font>
           </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
+          </property>
           <property name="currentIndex">
            <number>0</number>
           </property>
@@ -243,9 +249,9 @@
        </layout>
       </widget>
       <widget class="QWidget" name="layoutWidget">
-       <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1">
+       <layout class="QVBoxLayout" name="RightVLayout" stretch="0,1">
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2,3,0,0,0,0">
+         <layout class="QHBoxLayout" name="rightUpHLayout" stretch="2,3,0,0,0,0">
           <item>
            <spacer name="horizontalSpacer">
             <property name="orientation">

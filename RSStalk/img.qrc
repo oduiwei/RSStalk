@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/ico">
+        <file>RSSTalk.ico</file>
+        <file>loading.gif</file>
+        <file>image/RSS.png</file>
+    </qresource>
+</RCC>

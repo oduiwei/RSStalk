@@ -19,6 +19,7 @@
 #define read 1 //标记是否为已读
 #define unread 0
 
+/*feed类是rss, atom类的父类，主要负责通过DownloadManager来下载文件和保存文件信息*/
 class Feed : public QObject
 {
     Q_OBJECT
@@ -45,6 +46,7 @@ public slots:
     void setFileAddr(QString);
 };
 
+/*DownloadManager类，负责下载文件*/
 class DownloadManager : public QObject
 {
     Q_OBJECT
@@ -88,6 +90,7 @@ struct atomArticle {
     QString content;
 };
 
+/*XmlParser类用于解析xml文件并保存解析结果*/
 class XmlParser : public QObject, public QXmlStreamReader
 {
     Q_OBJECT

@@ -32,6 +32,8 @@
 #include <QMap>
 #include <QToolButton>
 #include <QTime>
+#include <QMovie>
+#include "ui_addfolder.h"
 #include "feed.h"
 #include "rss.h"
 #include "atom.h"
@@ -39,6 +41,11 @@
 namespace Ui {
 class MainWindow;
 }
+
+class MyWizard;//一定要先声明这个类，不然编译器会报错
+class MyToolButton;
+class MyAbstractionBtn;
+class MyWizardPage;
 
 //template<class T>
 class MainWindow : public QMainWindow
@@ -57,21 +64,25 @@ public:
     void downloadTest();//测试downloadManager
 
     bool toolBoxHasRepeatChild(QString);
+    bool treeWidgetHasRepeatChild(QString);
+    bool treeWidgetFolderHasRepeatChild(int, QString);
     int childItemIndexInToolBox(QString);
 
     int getCurrentToplevelItemIndex(QString);
 
 private:
     Ui::MainWindow *ui;
+    Ui::AddFolderDialog folderUi;
 
     QToolBar *fileTool;      //工具栏
     QToolBar *editTool;
     QToolBar *doToolBar;
 
-    QWizard *wizard;
-    QWizardPage *page1;
-    QWizardPage *page2;
-    QWizardPage *page3;
+    MyWizard* wizard;
+    MyWizardPage *page1;
+    MyWizardPage *page2;
+    MyWizardPage *page3;
+    //MyWizardPage *page4;
 
     QString urlFrInput;//从向导中获取出的字符串
     QString subsNameFrInput;
@@ -92,17 +103,36 @@ private:
     QLabel *finishLabel;//page3控件
     QLabel *pixLabelInPage3;
 
+//    QLabel *pixLabelInPage4;//page4控件
+//    QLabel *downloadLabel;
+//    QMovie *waitMovie;
+
+    QDialog *waitDialog;
+    QLabel *waitGifLabel;
+    QLabel *waitWordsLabel;
+    QMovie *waitMovie;
+
+    QDialog *dialog;//添加文件夹的对话框
+
+    Feed *newFeed;//新建推送的feed
+
     QMap<QString, QString> treeWidgetList;
 
 private slots:
     void addFolderActionTriggered();
+    void addFolderToTreeWidget();
     void addSubcriptionActionTriggered();
     void lineEditUrlEntered();
     void on_treeWidget_title_clicked(QTreeWidgetItem*, int);//当点击treewidget中的文章标题后
+    void on_toolBox_rightbtn_clicked(QPoint);
+    void on_treeWidget_rightbtn_clicked(QPoint);
 
 public slots:
     void addSubcription();
     void showArticleContent(QString, int);
+
+signals:
+    void downloadFinish();
 
 };
 
@@ -122,4 +152,36 @@ signals:
     void myclicked(QString, int);
 };
 
+class MyAbstractionBtn : public QAbstractButton
+{
+    Q_OBJECT
+public:
+    MyAbstractionBtn();
+    ~MyAbstractionBtn();
+
+    void mousePressEvent(QMouseEvent *event);
+
+signals:
+    void myclicked();
+};
+
+class MyWizard : public QWizard
+{
+    Q_OBJECT
+public:
+    MyWizard() {}
+    ~MyWizard(){}
+
+    //bool downloaded = false;//判断是否下载成功
+
+    bool validateCurrentPage();
+};
+
+class MyWizardPage : public QWizardPage
+{
+    Q_OBJECT
+public:
+    MyWizardPage() {}
+    ~MyWizardPage() {}
+};
 #endif // MAINWINDOW_H

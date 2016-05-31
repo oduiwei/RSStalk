@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/feed">
+        <file>atom.xml</file>
+        <file>feed.xml</file>
+        <file>ns.xml</file>
+    </qresource>
+</RCC>

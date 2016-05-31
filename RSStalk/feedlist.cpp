@@ -12,12 +12,12 @@ QList<Feed *> FeedList::getFeedList()
 
 void FeedList::addNewFeed(Feed newFeed)
 {
-
+    //this->feedList.append(newFeed);
 }
 
 void FeedList::deleteFeed(int index)
 {
-
+    //this->feedList.
 }
 
 void FeedList::renameFeed(int index, QString name)

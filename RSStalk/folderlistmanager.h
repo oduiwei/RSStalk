@@ -4,6 +4,7 @@
 #include <QList>
 #include "feedlist.h"
 
+/*FolderListManager类负责管理文件夹*/
 class FolderListManager
 {
 public:

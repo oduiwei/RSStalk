@@ -3,6 +3,7 @@
 
 #include "feed.h"
 
+/*Atom类继承于Feed类，负责通过XmlParser类解析atom文件并提供获取解析结果的接口*/
 class Atom : public Feed
 {
 public:
