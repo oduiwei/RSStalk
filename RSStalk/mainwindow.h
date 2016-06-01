@@ -65,8 +65,11 @@ public:
 
     void downloadTest();//测试downloadManager
 
+    void refreshFolderTreeWidget();
+    void clearFolderTreeWidget();
+
     bool toolBoxHasRepeatChild(QString);
-    bool treeWidgetHasRepeatChild(QString);
+    bool treeWidgetHasRepeatChild(QTreeWidget*, QString);
     bool treeWidgetFolderHasRepeatChild(int, QString);
     int childItemIndexInToolBox(QString);
 
@@ -135,7 +138,7 @@ private slots:
     void on_treeWidget_rightbtn_clicked(QPoint);
     void on_deleteAction_triggered();
     void on_deleteToolBox_triggered();
-    //void on_subsLineEdit_changed();
+    void subsUrlEdited();
 
 public slots:
     void addSubcription();
@@ -143,6 +146,8 @@ public slots:
 
 signals:
     void downloadFinish();
+    void wrongUrl();
+    void noChoice();
 
 };
 

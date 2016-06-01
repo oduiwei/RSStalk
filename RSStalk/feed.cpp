@@ -108,6 +108,7 @@ void DownloadManager::downloadFinished(QNetworkReply *reply)
     if (reply->error())
     {
         qDebug() << "download error.";
+        //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("下载失败！请检查输入网址是否正确！"));
         return;//下载出现错误
     }
 

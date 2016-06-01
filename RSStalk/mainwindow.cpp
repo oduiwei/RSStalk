@@ -68,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(on_treeWidget_title_clicked(QTreeWidgetItem*, int)));
     connect(ui->treeWidget, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_treeWidget_rightbtn_clicked(QPoint)));
     connect(ui->toolBox, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_toolBox_rightbtn_clicked(QPoint)));
-    //connect(urlLineEdit, SIGNAL(textChanged(QString)), this, SLOT(on_subsLineEdit_changed()));
+
 }
 
 MainWindow::~MainWindow()
@@ -216,12 +216,12 @@ bool MainWindow::toolBoxHasRepeatChild(QString title)//判断新建的item是否
 }
 
 /*判断新建的文件夹是否已经存在在treeWidget中*/
-bool MainWindow::treeWidgetHasRepeatChild(QString foldername)
+bool MainWindow::treeWidgetHasRepeatChild(QTreeWidget* widget, QString foldername)
 {
-    int childNum = ui->treeWidget->topLevelItemCount();
+    int childNum = widget->topLevelItemCount();
     for (int i = 0; i < childNum; i++)
     {
-        if (ui->treeWidget->topLevelItem(i)->text(0) == foldername)
+        if (widget->topLevelItem(i)->text(0) == foldername)
             return true;
     }
     return false;
@@ -376,7 +376,7 @@ void MainWindow::addFolderToTreeWidget()
     QString foldername = folderUi.folderNameLineEdit->text();
     if (foldername == NULL)
         return;
-    else if (treeWidgetHasRepeatChild(foldername))
+    else if (treeWidgetHasRepeatChild(ui->treeWidget, foldername))
     {
         QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("您输入的名字已经存在！"));
         warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
@@ -387,6 +387,44 @@ void MainWindow::addFolderToTreeWidget()
         QTreeWidgetItem *folderItem = new QTreeWidgetItem;
         folderItem->setText(0, foldername);
         ui->treeWidget->addTopLevelItem(folderItem);
+
+        if (wizard->isEnabled())
+        {
+            refreshFolderTreeWidget();//必须刷新一遍foldertreewidget，直接添加item不会自动显示新加的Item，目前是个问题，我也不知道为什么
+            //qDebug() << "enabled";
+        }
+    }
+}
+
+/*刷新folderwidget的内容*/
+void MainWindow::refreshFolderTreeWidget()
+{
+    int i = ui->treeWidget->topLevelItemCount();
+    for (int j = 0; j < i; j++)
+    {
+        QStringList columnList;
+        QString folderNameString = ui->treeWidget->topLevelItem(j)->text(0);
+        columnList << folderNameString;
+        QTreeWidgetItem *item = new QTreeWidgetItem(columnList);
+
+        int childNum = ui->treeWidget->topLevelItem(j)->childCount();
+        if (childNum > 0)
+        {
+            for(int m = 0; m < childNum; m++)
+            {
+                QString childFolderNameString;
+                QStringList childColumnList;
+
+                childFolderNameString = ui->treeWidget->topLevelItem(j)->child(m)->text(0);
+                childColumnList << childFolderNameString;
+                QTreeWidgetItem *childItem = new QTreeWidgetItem(childColumnList);
+
+                item->addChild(childItem);
+            }
+        }
+
+        if (!treeWidgetHasRepeatChild(folderTreeWidget, folderNameString))
+            folderTreeWidget->addTopLevelItem(item);
     }
 }
 
@@ -454,33 +492,35 @@ void MainWindow::addSubcriptionActionTriggered()
     header->setDefaultAlignment(Qt::AlignCenter);
     folderTreeWidget->setHeader(header);
 
-    int i = ui->treeWidget->topLevelItemCount();
-    for (int j = 0; j < i; j++)
-    {
-        QStringList columnList;
-        QString folderNameString = ui->treeWidget->topLevelItem(j)->text(0);
-        columnList << folderNameString;
-        QTreeWidgetItem *item = new QTreeWidgetItem(columnList);
+    refreshFolderTreeWidget();
 
-        int childNum = ui->treeWidget->topLevelItem(j)->childCount();
-        //qDebug() << childNum;
-        if (childNum > 0)
-        {
-            for(int m = 0; m < childNum; m++)
-            {
-                QString childFolderNameString;
-                QStringList childColumnList;
+//    int i = ui->treeWidget->topLevelItemCount();
+//    for (int j = 0; j < i; j++)
+//    {
+//        QStringList columnList;
+//        QString folderNameString = ui->treeWidget->topLevelItem(j)->text(0);
+//        columnList << folderNameString;
+//        QTreeWidgetItem *item = new QTreeWidgetItem(columnList);
 
-                childFolderNameString = ui->treeWidget->topLevelItem(j)->child(m)->text(0);
-                childColumnList << childFolderNameString;
-                QTreeWidgetItem *childItem = new QTreeWidgetItem(childColumnList);
+//        int childNum = ui->treeWidget->topLevelItem(j)->childCount();
+//        //qDebug() << childNum;
+//        if (childNum > 0)
+//        {
+//            for(int m = 0; m < childNum; m++)
+//            {
+//                QString childFolderNameString;
+//                QStringList childColumnList;
 
-                item->addChild(childItem);
-            }
-        }
+//                childFolderNameString = ui->treeWidget->topLevelItem(j)->child(m)->text(0);
+//                childColumnList << childFolderNameString;
+//                QTreeWidgetItem *childItem = new QTreeWidgetItem(childColumnList);
 
-        folderTreeWidget->addTopLevelItem(item);
-    }
+//                item->addChild(childItem);
+//            }
+//        }
+
+//        folderTreeWidget->addTopLevelItem(item);
+//    }
 
     newFolderBtn = new QPushButton;
     newFolderBtn->setText(QStringLiteral("新建文件夹"));
@@ -565,8 +605,11 @@ void MainWindow::addSubcriptionActionTriggered()
     wizard->setButtonText(MyWizard::FinishButton, QStringLiteral("完成"));
 
     QAbstractButton *finishBtn = this->wizard->button(MyWizard::FinishButton);
-    //connect(finishBtn, SIGNAL(clicked(bool)), this, SLOT(showWaitDialog()));
     connect(finishBtn, SIGNAL(clicked(bool)), this, SLOT(addSubcription()));//点击完成时新建推送
+    QAbstractButton *nextBtn = this->wizard->button(MyWizard::NextButton);
+    connect(nextBtn, SIGNAL(clicked(bool)), this, SLOT(subsUrlEdited()));
+    connect(this, SIGNAL(wrongUrl()), wizard, SLOT(back()));
+    connect(this, SIGNAL(noChoice()), wizard, SLOT(back()));
 
     connect(newFolderBtn, SIGNAL(clicked()), this, SLOT(addFolderActionTriggered()));//在向导中新建文件夹
 
@@ -663,8 +706,8 @@ int MainWindow::getCurrentToplevelItemIndex(QString name)
 void MainWindow::lineEditUrlEntered()
 {
     QString url;
-    QRegExp reg("[a-zA-z]+://(\\w+(-\\w+)*)(\\.(\\w+(-\\w+)*))*(\\?\\S*)?$");
-    QRegExp reg2("(\\w+(-\\w+)*)(\\.(\\w+(-\\w+)*))*(\\?\\S*)?$");
+    QRegExp reg("^https{0,1}://[\\w/.?=&]+");
+    QRegExp reg2("[\\w/.?=&]+");
 
     if (ui->webEditLine->text() == NULL)
     {
@@ -851,10 +894,29 @@ void MainWindow::on_deleteToolBox_triggered()
 }
 
 /*槽函数：当用户输入订阅的网址后，判断是否输入正确网址*/
-//void MainWindow::on_subsLineEdit_changed()
-//{
-//    if (urlLineEdit->text() == "111")
-//    {
-//        QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("您输入的网址有误！"));
-//    }
-//}
+void MainWindow::subsUrlEdited()
+{
+   QRegExp reg("^https{0,1}://[\\w/.&?=]*(atom|rss|feed|xml)+[\\w/.&?=]*");
+   QString url = urlLineEdit->text();
+
+   if (!reg.exactMatch(url))
+   {
+       QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("您输入的网址有误！请重新输入..."));
+       emit wrongUrl();
+       return;
+   }
+
+   if ((wizard->currentId() == 2) && (this->folderTreeWidget->currentItem() == NULL))
+   {
+       QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("一定要选择一个分类哦！"));
+       emit noChoice();
+       return;
+   }
+
+   if ((wizard->currentId() == 2) && (this->folderTreeWidget->currentItem()->parent()))
+   {
+       QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("请选择一个分类而不是一个订阅哦！"));
+       emit noChoice();
+       return;
+   }
+}
