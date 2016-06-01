@@ -33,6 +33,7 @@
 #include <QToolButton>
 #include <QTime>
 #include <QMovie>
+#include <QRegExp>
 #include "ui_addfolder.h"
 #include "feed.h"
 #include "rss.h"
@@ -56,6 +57,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    void initGUI();//初始化某些界面部件
     void createToolBar();//创建工具栏
     void setWindowFont();//初始化所有部件的字体
 
@@ -73,6 +75,11 @@ public:
 private:
     Ui::MainWindow *ui;
     Ui::AddFolderDialog folderUi;
+
+    QMenu *treeWidgetBlankMenu;
+    QMenu *treeWidgetMenu;
+    QMenu *treeWidgetSubMenu;
+    QMenu *toolBoxTitleMenu;
 
     QToolBar *fileTool;      //工具栏
     QToolBar *editTool;
@@ -126,6 +133,9 @@ private slots:
     void on_treeWidget_title_clicked(QTreeWidgetItem*, int);//当点击treewidget中的文章标题后
     void on_toolBox_rightbtn_clicked(QPoint);
     void on_treeWidget_rightbtn_clicked(QPoint);
+    void on_deleteAction_triggered();
+    void on_deleteToolBox_triggered();
+    //void on_subsLineEdit_changed();
 
 public slots:
     void addSubcription();

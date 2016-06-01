@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->toolBox->removeItem(0);
 
     ui->tabWidget->setTabText(0, QStringLiteral("软件学院"));
+    ui->webEditLine->setText(QStringLiteral("在这儿可以输入网址哦！"));
 
     dialog = new QDialog;//新建文件夹的界面初始化
     folderUi.setupUi(dialog);
@@ -50,6 +51,7 @@ MainWindow::MainWindow(QWidget *parent) :
     waitDialog->setWindowTitle(QStringLiteral("正在下载..."));
     waitDialog->setWindowFlags(Qt::WindowCloseButtonHint);
 
+    initGUI();
     createToolBar();//创建工具栏
     setWindowFont();//初始化所有部件的字体
     showParseResultExample();//显示解析的结果主要是treewidget和toolbox中内容的显示
@@ -57,10 +59,16 @@ MainWindow::MainWindow(QWidget *parent) :
     /*槽函数的连接*/
     connect(ui->newFolderAction, SIGNAL(triggered()), this, SLOT(addFolderActionTriggered()));//新建分类触发
     connect(ui->newSubscriptionAcion, SIGNAL(triggered()), this, SLOT(addSubcriptionActionTriggered()));//新建推送触发
+    connect(ui->deleteFolderAction, SIGNAL(triggered(bool)), this, SLOT(on_deleteAction_triggered()));
+    connect(ui->deleteSubAction, SIGNAL(triggered(bool)), this, SLOT(on_deleteAction_triggered()));
+    connect(ui->deleteToolBoxAction, SIGNAL(triggered(bool)), this, SLOT(on_deleteToolBox_triggered()));
     connect(ui->aheadToolBtn, SIGNAL(clicked(bool)), this, SLOT(lineEditUrlEntered()));//输入网址显示网页的两个槽函数
     connect(ui->webEditLine, SIGNAL(editingFinished()), this, SLOT(lineEditUrlEntered()));
     //点击treewidget中的item后，显示文章列表
     connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(on_treeWidget_title_clicked(QTreeWidgetItem*, int)));
+    connect(ui->treeWidget, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_treeWidget_rightbtn_clicked(QPoint)));
+    connect(ui->toolBox, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_toolBox_rightbtn_clicked(QPoint)));
+    //connect(urlLineEdit, SIGNAL(textChanged(QString)), this, SLOT(on_subsLineEdit_changed()));
 }
 
 MainWindow::~MainWindow()
@@ -253,7 +261,7 @@ void MainWindow::showArticleContent(QString title, int pos)
 
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly))
-        qDebug() << "open file failed in showArticleContent";
+        QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("打开文件失败！"));
 
     XmlParser parser(&file);
     if(parser.getFeedKind() == "rss")
@@ -264,7 +272,7 @@ void MainWindow::showArticleContent(QString title, int pos)
         //qDebug() << rssList[pos].description;//获取内容成功，但是还需要解析
 
         if (rssList[pos].link == NULL)
-            qDebug() << "there is no link info";
+            QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("获取文章网址失败！"));
         else
         {
             QUrl articleUrl(rssList[pos].link); //让界面中的webview加载网页
@@ -281,7 +289,7 @@ void MainWindow::showArticleContent(QString title, int pos)
 
         if (atomList[pos].link == NULL)
         {
-            qDebug() << "there is no link info";
+            QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("获取文章网址失败！"));
         }
         else
         {
@@ -291,6 +299,14 @@ void MainWindow::showArticleContent(QString title, int pos)
         }
     }
 
+}
+
+/*初始化某些界面部件*/
+void MainWindow::initGUI()
+{
+    ui->aheadToolBtn->setText(QStringLiteral("前进"));
+    ui->backToolBtn->setText(QStringLiteral("后退"));
+    ui->refreshToolBtn->setText(QStringLiteral("刷新"));
 }
 
 /*创建工具栏*/
@@ -647,12 +663,23 @@ int MainWindow::getCurrentToplevelItemIndex(QString name)
 void MainWindow::lineEditUrlEntered()
 {
     QString url;
-    if (ui->webEditLine->text() != NULL)
+    QRegExp reg("[a-zA-z]+://(\\w+(-\\w+)*)(\\.(\\w+(-\\w+)*))*(\\?\\S*)?$");
+    QRegExp reg2("(\\w+(-\\w+)*)(\\.(\\w+(-\\w+)*))*(\\?\\S*)?$");
+
+    if (ui->webEditLine->text() == NULL)
     {
-        url = "https://" + ui->webEditLine->text();
+        QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("输入的网址不能为空哦！"));
+        return;
     }
+    else if (reg.exactMatch(ui->webEditLine->text()))
+        url = ui->webEditLine->text();
+    else if (reg2.exactMatch(ui->webEditLine->text()))
+        url = "http://" + ui->webEditLine->text();
     else
-        url = "http://sw.scu.edu.cn";
+    {
+        QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("输入的网址有误！"));
+        return;
+    }
 
     ui->webView->load(url);
     ui->tabWidget->setTabText(0, QStringLiteral("浏览网页"));
@@ -702,19 +729,132 @@ bool MyWizard::validateCurrentPage()
     return true;
 }
 
-/*槽函数：当界面中的toolbox的item鼠标右键点击后*/
+/*槽函数：当界面中的toolbox的item鼠标右键点击后显示菜单*/
 void MainWindow::on_toolBox_rightbtn_clicked(QPoint pos)
 {
+    toolBoxTitleMenu = new QMenu;
+    toolBoxTitleMenu->addAction(ui->deleteToolBoxAction);
 
+    if (ui->toolBox->count() != 0)
+        toolBoxTitleMenu->exec(QCursor::pos());
 }
 
-/*槽函数：当界面中的treewidget的item鼠标右键点击后*/
+/*槽函数：当界面中的treewidget的item鼠标右键点击后显示菜单*/
 void MainWindow::on_treeWidget_rightbtn_clicked(QPoint pos)
 {
     QTreeWidgetItem *curItem = ui->treeWidget->itemAt(pos);
 
-    if (curItem == NULL)
+    if (curItem == NULL)//空白处
+    {
+        treeWidgetBlankMenu = new QMenu;
+        treeWidgetBlankMenu->addAction(ui->newFolderAction);
+
+        if (ui->treeWidget->topLevelItemCount() != 0)
+            treeWidgetBlankMenu->addAction(ui->newSubscriptionAcion);
+        treeWidgetBlankMenu->exec(QCursor::pos());
+        return;//一定要return不然会崩溃
+    }
+    if (curItem->parent())//点击的是子item
+    {
+        treeWidgetSubMenu = new QMenu;
+        treeWidgetSubMenu->addAction(ui->deleteSubAction);
+        treeWidgetSubMenu->exec(QCursor::pos());
         return;
-    if (curItem->parent())
+    }
+    if (!curItem->parent())
+    {
+        treeWidgetMenu = new QMenu;
+        treeWidgetMenu->addAction(ui->deleteFolderAction);
+        treeWidgetMenu->addAction(ui->newSubscriptionAcion);
+        treeWidgetMenu->exec(QCursor::pos());
         return;
+    }
 }
+
+/*槽函数：当界面右键菜单中的删除文件夹触发的时候*/
+void MainWindow::on_deleteAction_triggered()
+{
+    QTreeWidgetItem *curItem = ui->treeWidget->currentItem();
+
+    if (!curItem)
+        return;
+
+    if (!curItem->parent())
+    {
+        int childNum = curItem->childCount();//先删除子item
+
+        if (childNum != 0)
+        {
+            for (int i = 0; i < childNum; i++)//删除文件夹前先删除中间对应的文章列表
+            {
+                int toolItemNum = ui->toolBox->count();
+                for (int j = 0; j < toolItemNum; j++)
+                {
+                    if (curItem->child(i)->text(0) == ui->toolBox->itemText(j))
+                    {
+                        ui->toolBox->removeItem(j);
+                        continue;
+                    }
+                }
+            }
+
+            while (childNum >= 0)
+            {
+                curItem->takeChild(childNum);
+                childNum--;
+            }
+        }
+        ui->treeWidget->takeTopLevelItem(ui->treeWidget->currentIndex().row());//删除toplevelitem
+
+        if (ui->webView->url() != QUrl("http://sw.scu.edu.cn/"))//网页初始化
+        {
+            ui->webView->load(QUrl("http://sw.scu.edu.cn/"));
+            ui->tabWidget->setTabText(0, QStringLiteral("软件学院"));
+        }
+    }
+    else
+    {
+        curItem->parent()->takeChild(ui->treeWidget->currentIndex().row());
+
+        int toolItemNum = ui->toolBox->count();//删除一个订阅的时候，删除中间toolbox对应文章列表
+        for (int j = 0; j < toolItemNum; j++)
+        {
+            if (ui->toolBox->itemText(j) == curItem->text(0))
+            {
+                ui->toolBox->removeItem(j);
+                continue;
+            }
+        }
+        if (ui->webView->url() != QUrl("http://sw.scu.edu.cn/"))//网页初始化
+        {
+            ui->webView->load(QUrl("http://sw.scu.edu.cn/"));
+            ui->tabWidget->setTabText(0, QStringLiteral("软件学院"));
+        }
+    }
+}
+
+/*槽函数：当toolbox右键菜单中的删除文章列表触发*/
+void MainWindow::on_deleteToolBox_triggered()
+{
+    int index = ui->toolBox->currentIndex();
+
+    if (index == -1)
+        return;
+
+    if (ui->webView->url() != QUrl("http://sw.scu.edu.cn/"))
+    {
+        ui->webView->load(QUrl("http://sw.scu.edu.cn/"));
+        ui->tabWidget->setTabText(0, QStringLiteral("软件学院"));
+    }
+
+    ui->toolBox->removeItem(index);
+}
+
+/*槽函数：当用户输入订阅的网址后，判断是否输入正确网址*/
+//void MainWindow::on_subsLineEdit_changed()
+//{
+//    if (urlLineEdit->text() == "111")
+//    {
+//        QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("您输入的网址有误！"));
+//    }
+//}

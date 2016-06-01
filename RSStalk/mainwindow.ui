@@ -78,26 +78,6 @@
            <property name="text">
             <string>学校信息</string>
            </property>
-           <item>
-            <property name="text">
-             <string>软件学院</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>计算机学院</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>四川大学</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>活动与讲座</string>
-            </property>
-           </item>
           </item>
          </widget>
         </item>
@@ -375,6 +355,9 @@
     </widget>
     <addaction name="newSubscriptionAcion"/>
     <addaction name="newFolderAction"/>
+    <addaction name="deleteFolderAction"/>
+    <addaction name="deleteSubAction"/>
+    <addaction name="deleteToolBoxAction"/>
     <addaction name="separator"/>
     <addaction name="importOrExport_2"/>
     <addaction name="separator"/>
@@ -498,6 +481,21 @@
   <action name="doAction">
    <property name="text">
     <string>重做</string>
+   </property>
+  </action>
+  <action name="deleteFolderAction">
+   <property name="text">
+    <string>删除文件夹</string>
+   </property>
+  </action>
+  <action name="deleteSubAction">
+   <property name="text">
+    <string>删除订阅</string>
+   </property>
+  </action>
+  <action name="deleteToolBoxAction">
+   <property name="text">
+    <string>删除文章列表</string>
    </property>
   </action>
  </widget>
