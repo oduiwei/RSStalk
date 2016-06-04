@@ -34,6 +34,7 @@
 #include <QTime>
 #include <QMovie>
 #include <QRegExp>
+#include <QKeyEvent>
 #include "ui_addfolder.h"
 #include "feed.h"
 #include "rss.h"
@@ -47,6 +48,7 @@ class MyWizard;//一定要先声明这个类，不然编译器会报错
 class MyToolButton;
 class MyAbstractionBtn;
 class MyWizardPage;
+class MyLineEdit;
 
 //template<class T>
 class MainWindow : public QMainWindow
@@ -140,6 +142,8 @@ private slots:
     void on_deleteToolBox_triggered();
     void subsUrlEdited();
 
+    void showHasNotFinishedInfo();
+
 public slots:
     void addSubcription();
     void showArticleContent(QString, int);
@@ -199,4 +203,5 @@ public:
     MyWizardPage() {}
     ~MyWizardPage() {}
 };
+
 #endif // MAINWINDOW_H

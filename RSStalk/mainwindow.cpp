@@ -54,21 +54,42 @@ MainWindow::MainWindow(QWidget *parent) :
     initGUI();
     createToolBar();//创建工具栏
     setWindowFont();//初始化所有部件的字体
-    showParseResultExample();//显示解析的结果主要是treewidget和toolbox中内容的显示
+    //showParseResultExample();//显示解析的结果主要是treewidget和toolbox中内容的显示
 
     /*槽函数的连接*/
+    connect(ui->exitAction, SIGNAL(triggered(bool)), this, SLOT(close()));
     connect(ui->newFolderAction, SIGNAL(triggered()), this, SLOT(addFolderActionTriggered()));//新建分类触发
     connect(ui->newSubscriptionAcion, SIGNAL(triggered()), this, SLOT(addSubcriptionActionTriggered()));//新建推送触发
     connect(ui->deleteFolderAction, SIGNAL(triggered(bool)), this, SLOT(on_deleteAction_triggered()));
     connect(ui->deleteSubAction, SIGNAL(triggered(bool)), this, SLOT(on_deleteAction_triggered()));
     connect(ui->deleteToolBoxAction, SIGNAL(triggered(bool)), this, SLOT(on_deleteToolBox_triggered()));
     connect(ui->aheadToolBtn, SIGNAL(clicked(bool)), this, SLOT(lineEditUrlEntered()));//输入网址显示网页的两个槽函数
-    connect(ui->webEditLine, SIGNAL(editingFinished()), this, SLOT(lineEditUrlEntered()));
+    connect(ui->webEditLine, SIGNAL(returnPressed()), this, SLOT(lineEditUrlEntered()));//当网页输入框输入完成时候
     //点击treewidget中的item后，显示文章列表
     connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(on_treeWidget_title_clicked(QTreeWidgetItem*, int)));
     connect(ui->treeWidget, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_treeWidget_rightbtn_clicked(QPoint)));
     connect(ui->toolBox, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_toolBox_rightbtn_clicked(QPoint)));
 
+    connect(ui->manageCacheAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->markAllReadAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->copyAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->cutAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->doAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->exportFileAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->importFileAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->undoAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->pasteAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->zoomInAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->zoomOutAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
+
+    connect(ui->backToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->refreshToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->newTabToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->IRCToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->webToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->releaseToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->shareToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->feedbackToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
 }
 
 MainWindow::~MainWindow()
@@ -628,10 +649,17 @@ void MainWindow::addSubcription()
     newFeed = new Feed(urlAddr);//下载这个文件
 
     /*等待文件下载,这段代码很重要，如果不写，获取的文件地址是空的，因为如果文件没下载完，文件路径为空*/
+    QTime t;
+    t.start();
     while(!newFeed->alreadyDownload)
     {
         QCoreApplication::processEvents();
         waitDialog->show();//正在下载的时候显示等待对话框
+//        if (t.elapsed() > 10000)
+//        {
+//            qDebug() << "too long time.";
+//            break;
+//        }
     }
     waitDialog->close();
     QMessageBox::information(this, QStringLiteral("下载完成"), QStringLiteral("下载成功，点击文章查看..."), QMessageBox::Ok);
@@ -919,4 +947,10 @@ void MainWindow::subsUrlEdited()
        emit noChoice();
        return;
    }
+}
+
+/*显示功能尚未完成的对话框*/
+void MainWindow::showHasNotFinishedInfo()
+{
+    QMessageBox::warning(this, QStringLiteral("Sorry"), QStringLiteral("功能还在建设中哦！"));
 }

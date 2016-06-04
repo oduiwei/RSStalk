@@ -20,14 +20,16 @@ SOURCES += main.cpp\
     rss.cpp \
     atom.cpp \
     feedlist.cpp \
-    folderlistmanager.cpp
+    folderlistmanager.cpp \
+    mylineedit.cpp
 
 HEADERS  += mainwindow.h \
     feed.h \
     rss.h \
     atom.h \
     feedlist.h \
-    folderlistmanager.h
+    folderlistmanager.h \
+    mylineedit.h
 
 FORMS    += mainwindow.ui \
     addfolder.ui
