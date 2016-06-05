@@ -2,6 +2,8 @@
 #define MYLINEEDIT_H
 
 #include <QKeyEvent>
+#include <QLineEdit>
+#include <QDebug>
 
 class MyLineEdit : public QLineEdit
 {

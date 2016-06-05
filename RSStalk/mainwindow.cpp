@@ -328,130 +328,8 @@ void MainWindow::initGUI()
     ui->aheadToolBtn->setText(QStringLiteral("前进"));
     ui->backToolBtn->setText(QStringLiteral("后退"));
     ui->refreshToolBtn->setText(QStringLiteral("刷新"));
-}
 
-/*创建工具栏*/
-void MainWindow::createToolBar()
-{
-    //文件工具栏
-    fileTool = addToolBar("File");
-    fileTool->addAction(ui->importFileAction);
-    fileTool->addAction(ui->newSubscriptionAcion);
-    fileTool->addAction(ui->newFolderAction);
-
-    //编辑工具栏
-    editTool = addToolBar("Edit");
-    editTool->addAction(ui->copyAction);
-    editTool->addAction(ui->pasteAction);
-    editTool->addAction(ui->cutAction);
-    editTool->addSeparator();
-    editTool->addAction(ui->zoomInAction);
-    editTool->addAction(ui->zoomOutAction);
-
-    //撤销和重做工具栏
-    doToolBar = addToolBar("DoEdit");
-    doToolBar->addAction(ui->doAction);
-    doToolBar->addAction(ui->undoAction);
-}
-
-/*设置界面中所有部件的字体*/
-void MainWindow::setWindowFont()
-{
-    /*设置界面左边treewidget的字体*/
-    QFont treeWidgetFont("宋体", 10);
-    ui->treeWidget->setFont(treeWidgetFont);
-
-    /*设置QToolBox字体*/
-    QFont toolBoxFont("宋体", 10);
-    ui->toolBox->setFont(toolBoxFont);
-
-    /*设置QToolBar字体*/
-    QFont toolBarFont("宋体", 10);
-    fileTool->setFont(toolBarFont);
-    editTool->setFont(toolBarFont);
-    doToolBar->setFont(toolBarFont);
-
-    /*设置左下角QToolButton字体*/
-    QFont toolBtnFont("宋体", 10);
-    ui->IRCToolBtn->setFont(toolBtnFont);
-    ui->feedbackToolBtn->setFont(toolBtnFont);
-    ui->releaseToolBtn->setFont(toolBtnFont);
-    ui->shareToolBtn->setFont(toolBtnFont);
-    ui->webToolBtn->setFont(toolBtnFont);
-
-    /*设置等待对话框中的字体*/
-    QFont waitDialogFont("宋体", 10);
-    waitWordsLabel->setFont(waitDialogFont);
-
-}
-
-/*新建文件夹的界面*/
-void MainWindow::addFolderActionTriggered()
-{
-    dialog->exec();
-}
-
-/*将用户添加的文件名显示在treewidget和向导中的treewidget中*/
-void MainWindow::addFolderToTreeWidget()
-{
-    QString foldername = folderUi.folderNameLineEdit->text();
-    if (foldername == NULL)
-        return;
-    else if (treeWidgetHasRepeatChild(ui->treeWidget, foldername))
-    {
-        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("您输入的名字已经存在！"));
-        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-        warning.exec();
-    }
-    else
-    {
-        QTreeWidgetItem *folderItem = new QTreeWidgetItem;
-        folderItem->setText(0, foldername);
-        ui->treeWidget->addTopLevelItem(folderItem);
-
-        if (wizard->isEnabled())
-        {
-            refreshFolderTreeWidget();//必须刷新一遍foldertreewidget，直接添加item不会自动显示新加的Item，目前是个问题，我也不知道为什么
-            //qDebug() << "enabled";
-        }
-    }
-}
-
-/*刷新folderwidget的内容*/
-void MainWindow::refreshFolderTreeWidget()
-{
-    int i = ui->treeWidget->topLevelItemCount();
-    for (int j = 0; j < i; j++)
-    {
-        QStringList columnList;
-        QString folderNameString = ui->treeWidget->topLevelItem(j)->text(0);
-        columnList << folderNameString;
-        QTreeWidgetItem *item = new QTreeWidgetItem(columnList);
-
-        int childNum = ui->treeWidget->topLevelItem(j)->childCount();
-        if (childNum > 0)
-        {
-            for(int m = 0; m < childNum; m++)
-            {
-                QString childFolderNameString;
-                QStringList childColumnList;
-
-                childFolderNameString = ui->treeWidget->topLevelItem(j)->child(m)->text(0);
-                childColumnList << childFolderNameString;
-                QTreeWidgetItem *childItem = new QTreeWidgetItem(childColumnList);
-
-                item->addChild(childItem);
-            }
-        }
-
-        if (!treeWidgetHasRepeatChild(folderTreeWidget, folderNameString))
-            folderTreeWidget->addTopLevelItem(item);
-    }
-}
-
-/*新建推送向导的界面*/
-void MainWindow::addSubcriptionActionTriggered()
-{
+    /*初始化新建向导界面，后面初始化新建文件夹的时候会有错误*/
     QFont wizardFont("宋体", 10);
 
     wizard = new MyWizard;
@@ -635,6 +513,132 @@ void MainWindow::addSubcriptionActionTriggered()
     connect(newFolderBtn, SIGNAL(clicked()), this, SLOT(addFolderActionTriggered()));//在向导中新建文件夹
 
     this->wizard->button(MyWizard::FinishButton)->setEnabled(false);
+}
+
+/*创建工具栏*/
+void MainWindow::createToolBar()
+{
+    //文件工具栏
+    fileTool = addToolBar("File");
+    fileTool->addAction(ui->importFileAction);
+    fileTool->addAction(ui->newSubscriptionAcion);
+    fileTool->addAction(ui->newFolderAction);
+
+    //编辑工具栏
+    editTool = addToolBar("Edit");
+    editTool->addAction(ui->copyAction);
+    editTool->addAction(ui->pasteAction);
+    editTool->addAction(ui->cutAction);
+    editTool->addSeparator();
+    editTool->addAction(ui->zoomInAction);
+    editTool->addAction(ui->zoomOutAction);
+
+    //撤销和重做工具栏
+    doToolBar = addToolBar("DoEdit");
+    doToolBar->addAction(ui->doAction);
+    doToolBar->addAction(ui->undoAction);
+}
+
+/*设置界面中所有部件的字体*/
+void MainWindow::setWindowFont()
+{
+    /*设置界面左边treewidget的字体*/
+    QFont treeWidgetFont("宋体", 10);
+    ui->treeWidget->setFont(treeWidgetFont);
+
+    /*设置QToolBox字体*/
+    QFont toolBoxFont("宋体", 10);
+    ui->toolBox->setFont(toolBoxFont);
+
+    /*设置QToolBar字体*/
+    QFont toolBarFont("宋体", 10);
+    fileTool->setFont(toolBarFont);
+    editTool->setFont(toolBarFont);
+    doToolBar->setFont(toolBarFont);
+
+    /*设置左下角QToolButton字体*/
+    QFont toolBtnFont("宋体", 10);
+    ui->IRCToolBtn->setFont(toolBtnFont);
+    ui->feedbackToolBtn->setFont(toolBtnFont);
+    ui->releaseToolBtn->setFont(toolBtnFont);
+    ui->shareToolBtn->setFont(toolBtnFont);
+    ui->webToolBtn->setFont(toolBtnFont);
+
+    /*设置等待对话框中的字体*/
+    QFont waitDialogFont("宋体", 10);
+    waitWordsLabel->setFont(waitDialogFont);
+
+}
+
+/*新建文件夹的界面*/
+void MainWindow::addFolderActionTriggered()
+{
+    dialog->exec();
+}
+
+/*将用户添加的文件名显示在treewidget和向导中的treewidget中*/
+void MainWindow::addFolderToTreeWidget()
+{
+    QString foldername = folderUi.folderNameLineEdit->text();
+    if (foldername == NULL)
+    {
+        QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("名字不能为空哦！"));
+        return;
+    }
+    else if (treeWidgetHasRepeatChild(ui->treeWidget, foldername))
+    {
+        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("您输入的名字已经存在！"));
+        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+        warning.exec();
+        return;
+    }
+    else
+    {
+
+        QTreeWidgetItem *folderItem = new QTreeWidgetItem;
+        folderItem->setText(0, foldername);
+        ui->treeWidget->addTopLevelItem(folderItem);
+
+        if (wizard->isEnabled())//在这里一定要保证wizard已经初始化，所以一定要在构造函数里面就初始化wizard不能在后面函数初始化
+            refreshFolderTreeWidget();//必须刷新一遍foldertreewidget，直接添加item不会自动显示新加的Item，目前是个问题，我也不知道为什么
+    }
+}
+
+/*刷新folderwidget的内容*/
+void MainWindow::refreshFolderTreeWidget()
+{
+    int i = ui->treeWidget->topLevelItemCount();
+    for (int j = 0; j < i; j++)
+    {
+        QStringList columnList;
+        QString folderNameString = ui->treeWidget->topLevelItem(j)->text(0);
+        columnList << folderNameString;
+        QTreeWidgetItem *item = new QTreeWidgetItem(columnList);
+
+        int childNum = ui->treeWidget->topLevelItem(j)->childCount();
+        if (childNum > 0)
+        {
+            for(int m = 0; m < childNum; m++)
+            {
+                QString childFolderNameString;
+                QStringList childColumnList;
+
+                childFolderNameString = ui->treeWidget->topLevelItem(j)->child(m)->text(0);
+                childColumnList << childFolderNameString;
+                QTreeWidgetItem *childItem = new QTreeWidgetItem(childColumnList);
+
+                item->addChild(childItem);
+            }
+        }
+
+        if (!treeWidgetHasRepeatChild(folderTreeWidget, folderNameString))
+            folderTreeWidget->addTopLevelItem(item);
+    }
+}
+
+/*新建推送向导的界面显示*/
+void MainWindow::addSubcriptionActionTriggered()
+{
     wizard->exec();
 }
 
