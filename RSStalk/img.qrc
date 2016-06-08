@@ -3,5 +3,55 @@
         <file>RSSTalk.ico</file>
         <file>loading.gif</file>
         <file>image/RSS.png</file>
+        <file>image/open.png</file>
+        <file>image/RSS1 (3).png</file>
+        <file>image/RSS(Yellow) (5).png</file>
+        <file>image/bold.png</file>
+        <file>image/center.png</file>
+        <file>image/color.png</file>
+        <file>image/copy.png</file>
+        <file>image/cut.png</file>
+        <file>image/italic.png</file>
+        <file>image/justify.png</file>
+        <file>image/left.png</file>
+        <file>image/newFolder.png</file>
+        <file>image/newSubscription.png</file>
+        <file>image/paste.png</file>
+        <file>image/printImage.png</file>
+        <file>image/printText.png</file>
+        <file>image/redo.png</file>
+        <file>image/right.png</file>
+        <file>image/rotate90.png</file>
+        <file>image/rotate180.png</file>
+        <file>image/rotate270.png</file>
+        <file>image/RSS(Yellow) (1).png</file>
+        <file>image/RSS(Yellow) (2).png</file>
+        <file>image/RSS(Yellow) (3).png</file>
+        <file>image/RSS(Yellow) (4).png</file>
+        <file>image/RSS1 (1).png</file>
+        <file>image/RSS1 (2).png</file>
+        <file>image/RSS1 (4).png</file>
+        <file>image/RSS1 (5).png</file>
+        <file>image/RSStalk.png</file>
+        <file>image/underline.png</file>
+        <file>image/undo.png</file>
+        <file>image/zoomin.png</file>
+        <file>image/zoomout.png</file>
+        <file>image/delete_fileFolder (1).png</file>
+        <file>image/delete_filelist (1).png</file>
+        <file>image/delete_Sub (1).png</file>
+        <file>image/email_delete_64px_1187320_easyicon.net.png</file>
+        <file>image/in (1).png</file>
+        <file>image/ManageCache (1).png</file>
+        <file>image/sign_out (1).png</file>
+        <file>image/sing_out (2).png</file>
+        <file>image/mark_read (2).png</file>
+        <file>image/create_new page (2).png</file>
+        <file>image/forward (2) - 副本.png</file>
+        <file>image/forward (2).png</file>
+        <file>image/warning_panda.png</file>
+        <file>image/rss_panda.png</file>
+        <file>image/folder_panda.png</file>
+        <file>image/waiting.gif</file>
     </qresource>
 </RCC>

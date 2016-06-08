@@ -35,6 +35,7 @@
 #include <QMovie>
 #include <QRegExp>
 #include <QKeyEvent>
+#include <QCloseEvent>
 #include "ui_addfolder.h"
 #include "feed.h"
 #include "rss.h"
@@ -49,6 +50,7 @@ class MyToolButton;
 class MyAbstractionBtn;
 class MyWizardPage;
 class MyLineEdit;
+class MyDialog;
 
 //template<class T>
 class MainWindow : public QMainWindow
@@ -62,6 +64,7 @@ public:
     void initGUI();//初始化某些界面部件
     void createToolBar();//创建工具栏
     void setWindowFont();//初始化所有部件的字体
+    void initWindowIcon();
 
     void showParseResultExample();//渲染RSS源示例
 
@@ -119,7 +122,7 @@ private:
 //    QLabel *downloadLabel;
 //    QMovie *waitMovie;
 
-    QDialog *waitDialog;
+    MyDialog *waitDialog;
     QLabel *waitGifLabel;
     QLabel *waitWordsLabel;
     QMovie *waitMovie;
@@ -202,6 +205,20 @@ class MyWizardPage : public QWizardPage
 public:
     MyWizardPage() {}
     ~MyWizardPage() {}
+};
+
+class MyDialog : public QDialog
+{
+    Q_OBJECT
+public:
+    MyDialog() {}
+    ~MyDialog() {}
+
+    void closeEvent(QCloseEvent *);
+
+public:
+    bool isQuit = false;
+    bool fromUserClicked = false;
 };
 
 #endif // MAINWINDOW_H

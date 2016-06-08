@@ -7,7 +7,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     setWindowTitle("RSStalk");
-    setWindowIcon(QIcon(":/new/prefix/image/RSStalk.png"));
 
     ui->webView->load(QUrl("http://sw.scu.edu.cn")); //设置界面中的网页加载的网页
 
@@ -31,10 +30,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QAbstractButton *okBtn = folderUi.buttonBox->button(QDialogButtonBox::Ok);
     connect(okBtn, SIGNAL(clicked(bool)), this, SLOT(addFolderToTreeWidget()));
 
-    waitDialog = new QDialog;//等待对话框的初始化
+    waitDialog = new MyDialog;//等待对话框的初始化
     waitWordsLabel = new QLabel;
     waitGifLabel = new QLabel;
-    waitMovie = new QMovie("://ico//loading.gif");
+    waitMovie = new QMovie("://ico//image//waiting.gif");
 
     waitWordsLabel->setText(QStringLiteral("请稍等片刻，正在下载订阅文件..."));
     waitGifLabel->setMovie(waitMovie);
@@ -52,9 +51,10 @@ MainWindow::MainWindow(QWidget *parent) :
     waitDialog->setWindowFlags(Qt::WindowCloseButtonHint);
 
     initGUI();
+    initWindowIcon();
     createToolBar();//创建工具栏
     setWindowFont();//初始化所有部件的字体
-    //showParseResultExample();//显示解析的结果主要是treewidget和toolbox中内容的显示
+    showParseResultExample();//显示解析的结果主要是treewidget和toolbox中内容的显示
 
     /*槽函数的连接*/
     connect(ui->exitAction, SIGNAL(triggered(bool)), this, SLOT(close()));
@@ -69,6 +69,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(on_treeWidget_title_clicked(QTreeWidgetItem*, int)));
     connect(ui->treeWidget, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_treeWidget_rightbtn_clicked(QPoint)));
     connect(ui->toolBox, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_toolBox_rightbtn_clicked(QPoint)));
+    connect(ui->backToolBtn, SIGNAL(clicked(bool)), ui->webView, SLOT(back()));
+    connect(ui->refreshToolBtn, SIGNAL(clicked(bool)), ui->webView, SLOT(reload()));
 
     connect(ui->manageCacheAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->markAllReadAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
@@ -82,8 +84,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->zoomInAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->zoomOutAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
 
-    connect(ui->backToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
-    connect(ui->refreshToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    //connect(ui->backToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    //connect(ui->refreshToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->newTabToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->IRCToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->webToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
@@ -95,6 +97,15 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+/*初始化所有窗体的图标*/
+void MainWindow::initWindowIcon()
+{
+    this->setWindowIcon(QIcon("://ico//image//rss_panda.png"));
+    this->dialog->setWindowIcon(QIcon("://ico//image//folder_panda.png"));
+    this->waitDialog->setWindowIcon(QIcon("://ico//image//folder_panda.png"));
+    this->wizard->setWindowIcon(QIcon("://ico//image//rss_panda.png"));
 }
 
 /*添加默认的几个订阅，供展示用，后面可以删除*/
@@ -122,6 +133,9 @@ void MainWindow::showParseResultExample()
     QTreeWidgetItem *item0 = new QTreeWidgetItem(feedTitleText_0, 0);//添加两个treewidget
     QTreeWidgetItem *item1 = new QTreeWidgetItem(feedTitleText_1, 0);
     QTreeWidgetItem *item2 = new QTreeWidgetItem(feedTitleText_2, 0);
+    item0->setIcon(0, QIcon("://ico//image//RSStalk.png"));
+    item1->setIcon(0, QIcon("://ico//image//RSStalk.png"));
+    item2->setIcon(0, QIcon("://ico//image//RSStalk.png"));
     //qDebug() << ui->treeWidget->topLevelItem(0)->text(0);打印出界面中treewidget的第0列，第0个子item
     ui->treeWidget->topLevelItem(0)->addChild(item0);
     ui->treeWidget->topLevelItem(0)->addChild(item1);
@@ -282,7 +296,13 @@ void MainWindow::showArticleContent(QString title, int pos)
 
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly))
-        QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("打开文件失败！"));
+    {
+        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("打开文件失败!"));
+        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+        warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+        warning.setIcon(QMessageBox::Warning);
+        warning.exec();
+    }
 
     XmlParser parser(&file);
     if(parser.getFeedKind() == "rss")
@@ -293,7 +313,14 @@ void MainWindow::showArticleContent(QString title, int pos)
         //qDebug() << rssList[pos].description;//获取内容成功，但是还需要解析
 
         if (rssList[pos].link == NULL)
-            QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("获取文章网址失败！"));
+        {
+            //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("获取文章网址失败！"));
+            QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("获取文章网址失败!"));
+            warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+            warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+            warning.setIcon(QMessageBox::Warning);
+            warning.exec();
+        }
         else
         {
             QUrl articleUrl(rssList[pos].link); //让界面中的webview加载网页
@@ -310,7 +337,12 @@ void MainWindow::showArticleContent(QString title, int pos)
 
         if (atomList[pos].link == NULL)
         {
-            QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("获取文章网址失败！"));
+            //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("获取文章网址失败！"));
+            QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("获取文章网址失败！"));
+            warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+            warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+            warning.setIcon(QMessageBox::Warning);
+            warning.exec();
         }
         else
         {
@@ -582,13 +614,25 @@ void MainWindow::addFolderToTreeWidget()
     QString foldername = folderUi.folderNameLineEdit->text();
     if (foldername == NULL)
     {
-        QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("名字不能为空哦！"));
+        //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("名字不能为空哦！"));
+        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("名字不能为空哦！"));
+        warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+        warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+        warning.setIcon(QMessageBox::Warning);
+        warning.exec();
         return;
     }
     else if (treeWidgetHasRepeatChild(ui->treeWidget, foldername))
     {
+//        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("您输入的名字已经存在！"));
+//        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+//        warning.exec();
         QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("您输入的名字已经存在！"));
+        warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
         warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+        warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+        warning.setIcon(QMessageBox::Warning);
         warning.exec();
         return;
     }
@@ -597,6 +641,7 @@ void MainWindow::addFolderToTreeWidget()
 
         QTreeWidgetItem *folderItem = new QTreeWidgetItem;
         folderItem->setText(0, foldername);
+        folderItem->setIcon(0, QIcon("://ico//image//RSS1 (1).png"));
         ui->treeWidget->addTopLevelItem(folderItem);
 
         if (wizard->isEnabled())//在这里一定要保证wizard已经初始化，所以一定要在构造函数里面就初始化wizard不能在后面函数初始化
@@ -639,6 +684,7 @@ void MainWindow::refreshFolderTreeWidget()
 /*新建推送向导的界面显示*/
 void MainWindow::addSubcriptionActionTriggered()
 {
+    wizard->restart();
     wizard->exec();
 }
 
@@ -659,11 +705,37 @@ void MainWindow::addSubcription()
     {
         QCoreApplication::processEvents();
         waitDialog->show();//正在下载的时候显示等待对话框
-//        if (t.elapsed() > 10000)
-//        {
-//            qDebug() << "too long time.";
-//            break;
-//        }
+
+        if (waitDialog->isQuit)
+        {
+            waitDialog->close();
+            waitDialog->isQuit = false;
+            return;
+        }
+
+        if (t.elapsed() > 20000)//当下载时间大于20s时提示下载时间太长
+        {
+            QMessageBox infoBox;
+            infoBox.setText(QStringLiteral("下载时间太长，是否继续？"));
+            infoBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+            infoBox.setButtonText(QMessageBox::Ok, QStringLiteral("是"));
+            infoBox.setButtonText(QMessageBox::Cancel, QStringLiteral("否"));
+            QAbstractButton *okBtn = infoBox.button(QMessageBox::Ok);
+            QAbstractButton *noBtn = infoBox.button(QMessageBox::Cancel);
+            infoBox.exec();
+
+            if (infoBox.clickedButton() == noBtn)
+            {
+                waitDialog->close();
+                return;
+            }
+            else if (infoBox.clickedButton() == okBtn)
+            {
+                infoBox.close();
+                t.restart();
+                continue;
+            }
+        }
     }
     waitDialog->close();
     QMessageBox::information(this, QStringLiteral("下载完成"), QStringLiteral("下载成功，点击文章查看..."), QMessageBox::Ok);
@@ -692,11 +764,18 @@ void MainWindow::addSubcription()
 
         if (treeWidgetFolderHasRepeatChild(index, atomFeed.getAtomTitle()))
         {
-            QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("在这个分类中已经存在这个订阅了！"));
+            //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("在这个分类中已经存在这个订阅了！"));
+            QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("在这个分类中已经存在这个订阅了！"));
+            warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+            warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+            warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+            warning.setIcon(QMessageBox::Warning);
+            warning.exec();
             return;
         }
 
         QTreeWidgetItem *item = new QTreeWidgetItem(textlist, 0);
+        item->setIcon(0, QIcon("://ico//image//RSStalk.png"));
         ui->treeWidget->topLevelItem(index)->addChild(item);
 
         treeWidgetList.insert(textlist.at(0), filename);
@@ -710,11 +789,18 @@ void MainWindow::addSubcription()
 
         if (treeWidgetFolderHasRepeatChild(index, rssFeed.getRssTitle()))
         {
-            QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("在这个分类中已经存在这个订阅了！"));
+            //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("在这个分类中已经存在这个订阅了！"));
+            QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("在这个分类中已经存在这个订阅了！"));
+            warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+            warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+            warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+            warning.setIcon(QMessageBox::Warning);
+            warning.exec();
             return;
         }
 
         QTreeWidgetItem *item = new QTreeWidgetItem(textlist, 0);
+        item->setIcon(0, QIcon("://ico//image//RSStalk.png"));
         ui->treeWidget->topLevelItem(index)->addChild(item);
 
         treeWidgetList.insert(textlist.at(0), filename);
@@ -743,7 +829,14 @@ void MainWindow::lineEditUrlEntered()
 
     if (ui->webEditLine->text() == NULL)
     {
-        QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("输入的网址不能为空哦！"));
+        //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("输入的网址不能为空哦！"));
+        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("输入的网址不能为空哦！"));
+        warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+        warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+        warning.setIcon(QMessageBox::Warning);
+        warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
+        warning.exec();
         return;
     }
     else if (reg.exactMatch(ui->webEditLine->text()))
@@ -752,7 +845,13 @@ void MainWindow::lineEditUrlEntered()
         url = "http://" + ui->webEditLine->text();
     else
     {
-        QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("输入的网址有误！"));
+        //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("输入的网址有误！"));
+        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("输入的网址有误！"));
+        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+        warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+        warning.setIcon(QMessageBox::Warning);
+        warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
+        warning.exec();
         return;
     }
 
@@ -928,26 +1027,44 @@ void MainWindow::on_deleteToolBox_triggered()
 /*槽函数：当用户输入订阅的网址后，判断是否输入正确网址*/
 void MainWindow::subsUrlEdited()
 {
-   QRegExp reg("^https{0,1}://[\\w/.&?=]*(atom|rss|feed|xml)+[\\w/.&?=]*");
+   QRegExp reg("^https{0,1}://[\\w/.&?=]*(atom|rss|feed|xml|Atom|Rss|Feed|Xml|ATOM|RSS|FEED|XML)+[\\w/.&?=]*");
    QString url = urlLineEdit->text();
 
    if (!reg.exactMatch(url))
    {
-       QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("您输入的网址有误！请重新输入..."));
+       //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("您输入的网址有误！请重新输入..."));
+       QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("您输入的网址有误！请重新输入..."));
+       warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+       warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+       warning.setIcon(QMessageBox::Warning);
+       warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
+       warning.exec();
        emit wrongUrl();
        return;
    }
 
    if ((wizard->currentId() == 2) && (this->folderTreeWidget->currentItem() == NULL))
    {
-       QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("一定要选择一个分类哦！"));
+       //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("一定要选择一个分类哦！"));
+       QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("一定要选择一个分类哦！"));
+       warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+       warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+       warning.setIcon(QMessageBox::Warning);
+       warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
+       warning.exec();
        emit noChoice();
        return;
    }
 
    if ((wizard->currentId() == 2) && (this->folderTreeWidget->currentItem()->parent()))
    {
-       QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("请选择一个分类而不是一个订阅哦！"));
+       //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("请选择一个分类而不是一个订阅哦！"));
+       QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("请选择一个分裂而不是一个订阅哦！"));
+       warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+       warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+       warning.setIcon(QMessageBox::Warning);
+       warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
+       warning.exec();
        emit noChoice();
        return;
    }
@@ -956,5 +1073,47 @@ void MainWindow::subsUrlEdited()
 /*显示功能尚未完成的对话框*/
 void MainWindow::showHasNotFinishedInfo()
 {
-    QMessageBox::warning(this, QStringLiteral("Sorry"), QStringLiteral("功能还在建设中哦！"));
+    //QMessageBox::warning(this, QStringLiteral("Sorry"), QStringLiteral("功能还在建设中哦！"));
+    QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("功能还在建设中哦！"));
+    warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+    warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+    warning.setIcon(QMessageBox::Warning);
+    warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
+    warning.exec();
+}
+
+/*重载QDialog的closeEvent*/
+void MyDialog::closeEvent(QCloseEvent *event)
+{
+    if (fromUserClicked)
+    {
+        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("确定退出目前下载？"));
+        warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+        warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+        warning.setIcon(QMessageBox::Warning);
+        warning.exec();
+
+        QAbstractButton *okBtn = warning.button(QMessageBox::Ok);
+        QAbstractButton *noBtn = warning.button(QMessageBox::Cancel);
+
+        if (warning.clickedButton() == okBtn)
+        {
+            isQuit = true;
+            event->accept();
+        }
+        else if (warning.clickedButton() == noBtn)
+        {
+            event->accept();
+        }
+        else
+        {
+            event->ignore();
+        }
+    }
+    else
+    {
+        event->accept();
+    }
+
 }

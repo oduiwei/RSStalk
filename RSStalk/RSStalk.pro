@@ -7,6 +7,7 @@
 QT       += core gui
 QT += webenginewidgets
 QT += xml
+QT += network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -37,4 +38,6 @@ FORMS    += mainwindow.ui \
 RESOURCES += \
     img.qrc \
     xmlfile.qrc
+
+RC_FILE +=  icon.rc
 

@@ -71,8 +71,8 @@ void DownloadManager::doDownload(const QUrl url)
 
     file.setFileName(filename);
     if (!file.open(QIODevice::ReadWrite)) {
-        qDebug() << "open file failed.";
-        //return;
+        //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("打开文件错误！"));
+        return;
     }
 
     QNetworkRequest request(url);
@@ -91,7 +91,7 @@ QString DownloadManager::saveFileName(QUrl url)
     if (QFile::exists(basename)) {
         //已经存在这个名字，重新命一个名字
         int i = 0;
-        basename += '.';
+        //basename += '.';
         while (QFile::exists(basename + QString::number(i)))
             ++i;
 
@@ -126,9 +126,15 @@ void DownloadManager::rename()
 {
     //qDebug() << "enter 5";
     if (!file.open(QIODevice::ReadWrite))
+    {
+        qDebug() << "file open failed in rename";
         return;
+    }
     if (file.size() == 0)
+    {
+        qDebug() << "file size equals 0.";
         return;
+    }
 
     //qDebug() << file->size();
     XmlParser parser(&file);
@@ -142,6 +148,7 @@ void DownloadManager::rename()
             ++i;
 
         newName += QString::number(i);
+        tempName = newName + ".xml";
     }
     newName += ".xml";
     file.rename(newName);
