@@ -1,4 +1,7 @@
-﻿#ifndef MAINWINDOW_H
+﻿#if _MSC_VER >= 1600
+#pragma execution_character_set("utf-8")
+#endif
+#ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QMainWindow>
@@ -40,6 +43,8 @@
 #include "feed.h"
 #include "rss.h"
 #include "atom.h"
+#include "dbmanager.h"
+#include "ui_renamedialog.h"
 
 namespace Ui {
 class MainWindow;
@@ -80,9 +85,15 @@ public:
 
     int getCurrentToplevelItemIndex(QString);
 
+    void showDefaultFromDB();//界面中显示数据库中存在的数据
+
 private:
     Ui::MainWindow *ui;
     Ui::AddFolderDialog folderUi;
+    Ui::renameDialog renameUi;
+
+    DBManager *dbManager;
+    QDialog *renameDialog;
 
     QMenu *treeWidgetBlankMenu;
     QMenu *treeWidgetMenu;
@@ -137,6 +148,8 @@ private slots:
     void addFolderActionTriggered();
     void addFolderToTreeWidget();
     void addSubcriptionActionTriggered();
+    void renameActionTriggered();
+    void renameDBRefresh();
     void lineEditUrlEntered();
     void on_treeWidget_title_clicked(QTreeWidgetItem*, int);//当点击treewidget中的文章标题后
     void on_toolBox_rightbtn_clicked(QPoint);

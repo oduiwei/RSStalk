@@ -59,36 +59,6 @@
             <set>AlignCenter</set>
            </property>
           </column>
-          <item>
-           <property name="text">
-            <string>博客订阅</string>
-           </property>
-           <property name="icon">
-            <iconset>
-             <selectedon>:/ico/image/RSS1 (1).png</selectedon>
-            </iconset>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>新闻订阅</string>
-           </property>
-           <property name="icon">
-            <iconset>
-             <selectedon>:/ico/image/RSS1 (1).png</selectedon>
-            </iconset>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>喜欢</string>
-           </property>
-           <property name="icon">
-            <iconset>
-             <selectedon>:/ico/image/RSS1 (1).png</selectedon>
-            </iconset>
-           </property>
-          </item>
          </widget>
         </item>
         <item>
@@ -107,6 +77,16 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="font">
+             <font>
+              <family>宋体</family>
+              <pointsize>10</pointsize>
+              <weight>50</weight>
+              <italic>false</italic>
+              <bold>false</bold>
+              <underline>false</underline>
+             </font>
+            </property>
             <property name="text">
              <string>转到IRC</string>
             </property>
@@ -119,6 +99,11 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <family>宋体</family>
+             </font>
             </property>
             <property name="text">
              <string>转到网页</string>
@@ -133,6 +118,11 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="font">
+             <font>
+              <family>宋体</family>
+             </font>
+            </property>
             <property name="text">
              <string>我要发布</string>
             </property>
@@ -146,6 +136,11 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="font">
+             <font>
+              <family>宋体</family>
+             </font>
+            </property>
             <property name="text">
              <string>分享到</string>
             </property>
@@ -158,6 +153,11 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <family>宋体</family>
+             </font>
             </property>
             <property name="text">
              <string>我要反馈</string>
@@ -226,7 +226,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>257</width>
+             <width>260</width>
              <height>692</height>
             </rect>
            </property>
@@ -400,6 +400,7 @@
      <string>编辑(&amp;E)</string>
     </property>
     <addaction name="markAllReadAction"/>
+    <addaction name="renameAction"/>
     <addaction name="separator"/>
     <addaction name="copyAction"/>
     <addaction name="pasteAction"/>
@@ -600,6 +601,14 @@
    </property>
    <property name="text">
     <string>删除文章列表</string>
+   </property>
+  </action>
+  <action name="renameAction">
+   <property name="text">
+    <string>重命名</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
    </property>
   </action>
  </widget>

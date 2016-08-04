@@ -1,4 +1,7 @@
-﻿#ifndef FEEDLIST_H
+﻿#if _MSC_VER >= 1600
+#pragma execution_character_set("utf-8")
+#endif
+#ifndef FEEDLIST_H
 #define FEEDLIST_H
 
 #include <QList>

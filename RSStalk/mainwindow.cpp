@@ -1,4 +1,7 @@
-﻿#include "mainwindow.h"
+﻿#if _MSC_VER >= 1600
+#pragma execution_character_set("utf-8")
+#endif
+#include "mainwindow.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -13,18 +16,18 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->splitter->setStretchFactor(0, 2);//优化界面中的分裂窗口
     ui->splitter->setStretchFactor(1, 6);
     ui->splitter->setStretchFactor(2, 4);
-    ui->treeWidget->setHeaderLabel(QStringLiteral("订阅分类"));
+    ui->treeWidget->setHeaderLabel(tr("订阅分类"));
 
     ui->toolBox->removeItem(0);
 
-    ui->tabWidget->setTabText(0, QStringLiteral("软件学院"));
-    ui->webEditLine->setText(QStringLiteral("在这儿可以输入网址哦！"));
+    ui->tabWidget->setTabText(0, tr("软件学院"));
+    ui->webEditLine->setText(tr("在这儿可以输入网址哦！"));
 
     dialog = new QDialog;//新建文件夹的界面初始化
     folderUi.setupUi(dialog);
-    dialog->setWindowTitle(QStringLiteral("新建分类"));
-    folderUi.buttonBox->button(QDialogButtonBox::Ok)->setText(QStringLiteral("确定"));
-    folderUi.buttonBox->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("取消"));
+    dialog->setWindowTitle(tr("新建分类"));
+    folderUi.buttonBox->button(QDialogButtonBox::Ok)->setText(tr("确定"));
+    folderUi.buttonBox->button(QDialogButtonBox::Cancel)->setText(tr("取消"));
     dialog->setMaximumSize(457, 107);
     dialog->setMinimumSize(457, 107);
     QAbstractButton *okBtn = folderUi.buttonBox->button(QDialogButtonBox::Ok);
@@ -35,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     waitGifLabel = new QLabel;
     waitMovie = new QMovie("://ico//image//waiting.gif");
 
-    waitWordsLabel->setText(QStringLiteral("请稍等片刻，正在下载订阅文件..."));
+    waitWordsLabel->setText(tr("请稍等片刻，正在下载订阅文件..."));
     waitGifLabel->setMovie(waitMovie);
     waitMovie->start();
 
@@ -47,14 +50,17 @@ MainWindow::MainWindow(QWidget *parent) :
     waitDialog->setStyleSheet("background-color: white");
     waitDialog->setMaximumSize(750, 450);
     waitDialog->setMinimumSize(750, 450);
-    waitDialog->setWindowTitle(QStringLiteral("正在下载..."));
+    waitDialog->setWindowTitle(tr("正在下载..."));
     waitDialog->setWindowFlags(Qt::WindowCloseButtonHint);
+
+    dbManager = new DBManager();//初始化数据库操控类
 
     initGUI();
     initWindowIcon();
     createToolBar();//创建工具栏
     setWindowFont();//初始化所有部件的字体
-    showParseResultExample();//显示解析的结果主要是treewidget和toolbox中内容的显示
+    //showParseResultExample();//显示解析的结果主要是treewidget和toolbox中内容的显示
+    showDefaultFromDB();//显示数据库中已有的数据
 
     /*槽函数的连接*/
     connect(ui->exitAction, SIGNAL(triggered(bool)), this, SLOT(close()));
@@ -92,6 +98,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->releaseToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->shareToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->feedbackToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->renameAction, SIGNAL(triggered(bool)), this, SLOT(renameActionTriggered()));
 }
 
 MainWindow::~MainWindow()
@@ -152,12 +159,12 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
     if (item->parent())//判断点击的item是否是子Items
     {
         QString titleClicked;
-        //titleClicked = ui->treeWidget->currentItem()->text(0);//获取当前点击的文章的标题
         titleClicked = item->text(column);//获取当前点击的文章的标题
+        int class_id = this->dbManager->getClassId(item->parent()->text(0));
+        QString path = this->dbManager->getFeedPath(class_id, titleClicked);
+        //qDebug() << path << " in mainwindow";
 
-        QString fileName = treeWidgetList[titleClicked];
-
-        QFile feedfile(fileName);
+        QFile feedfile(path);
         if (!feedfile.open(QIODevice::ReadOnly))
         {
             qDebug() << "open file failed";
@@ -167,7 +174,7 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
 
         if (parser.getFeedKind() == "rss")
         {
-            Rss rss(fileName);
+            Rss rss(path);
 
             QGroupBox *artBox = new QGroupBox;
             QVBoxLayout *vLayout = new QVBoxLayout(artBox);
@@ -201,7 +208,7 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
         }
         else if (parser.getFeedKind() == "atom")
         {
-            Atom atom(fileName);
+            Atom atom(path);
 
             QGroupBox *artBox = new QGroupBox;
             QVBoxLayout *vLayout = new QVBoxLayout(artBox);
@@ -291,15 +298,18 @@ int MainWindow::childItemIndexInToolBox(QString title)
 /*在右边wenengineview中加载点击文章的内容*/
 void MainWindow::showArticleContent(QString title, int pos)
 {
-    //qDebug() << title << " " << pos;//测试成功
-    QString fileName = treeWidgetList[title];
+    if (!ui->treeWidget->currentItem()->parent())
+        return;
+    QString feedTitle = ui->toolBox->itemText(ui->toolBox->currentIndex());
+    int class_id = this->dbManager->getClassIdByFeedTitle(feedTitle);
+    QString fileName = this->dbManager->getFeedPath(class_id, feedTitle);
 
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly))
     {
-        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("打开文件失败!"));
-        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-        warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+        QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("打开文件失败!"));
+        warning.setButtonText(QMessageBox::Ok, tr("确定"));
+        warning.setButtonText(QMessageBox::Cancel, tr("取消"));
         warning.setIcon(QMessageBox::Warning);
         warning.exec();
     }
@@ -314,10 +324,10 @@ void MainWindow::showArticleContent(QString title, int pos)
 
         if (rssList[pos].link == NULL)
         {
-            //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("获取文章网址失败！"));
-            QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("获取文章网址失败!"));
-            warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-            warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+            //QMessageBox::warning(this, tr("警告"), tr("获取文章网址失败！"));
+            QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("获取文章网址失败!"));
+            warning.setButtonText(QMessageBox::Ok, tr("确定"));
+            warning.setButtonText(QMessageBox::Cancel, tr("取消"));
             warning.setIcon(QMessageBox::Warning);
             warning.exec();
         }
@@ -337,10 +347,10 @@ void MainWindow::showArticleContent(QString title, int pos)
 
         if (atomList[pos].link == NULL)
         {
-            //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("获取文章网址失败！"));
-            QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("获取文章网址失败！"));
-            warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-            warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+            //QMessageBox::warning(this, tr("警告"), tr("获取文章网址失败！"));
+            QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("获取文章网址失败！"));
+            warning.setButtonText(QMessageBox::Ok, tr("确定"));
+            warning.setButtonText(QMessageBox::Cancel, tr("取消"));
             warning.setIcon(QMessageBox::Warning);
             warning.exec();
         }
@@ -357,15 +367,23 @@ void MainWindow::showArticleContent(QString title, int pos)
 /*初始化某些界面部件*/
 void MainWindow::initGUI()
 {
-    ui->aheadToolBtn->setText(QStringLiteral("前进"));
-    ui->backToolBtn->setText(QStringLiteral("后退"));
-    ui->refreshToolBtn->setText(QStringLiteral("刷新"));
+    ui->aheadToolBtn->setText(tr("前进"));
+    ui->backToolBtn->setText(tr("后退"));
+    ui->refreshToolBtn->setText(tr("刷新"));
+
+    renameDialog = new QDialog;
+    renameUi.setupUi(renameDialog);
+    renameDialog->setWindowTitle(tr("重命名"));
+    renameUi.buttonBox->button(QDialogButtonBox::Ok)->setText(tr("确定"));
+    renameUi.buttonBox->button(QDialogButtonBox::Cancel)->setText(tr("取消"));
+    renameDialog->setMaximumSize(400, 133);
+    renameDialog->setMinimumSize(400, 133);
 
     /*初始化新建向导界面，后面初始化新建文件夹的时候会有错误*/
     QFont wizardFont("宋体", 10);
 
     wizard = new MyWizard;
-    wizard->setWindowTitle(QStringLiteral("新建推送"));
+    wizard->setWindowTitle(tr("新建推送"));
     wizard->setFont(wizardFont);
     wizard->setWizardStyle(MyWizard::ModernStyle);
     //wizard->setOption(QWizard::HaveHelpButton, true);//显示帮助按钮
@@ -373,14 +391,14 @@ void MainWindow::initGUI()
 
     /*初始化新建推送向导的第一页*/
     page1 = new MyWizardPage;
-    page1->setTitle(QStringLiteral("新建一个推送"));
+    page1->setTitle(tr("新建一个推送"));
 
     urlLabel = new QLabel;
-    urlLabel->setText(QStringLiteral("请输入推送的URL地址，我们会对其进行解析"));
+    urlLabel->setText(tr("请输入推送的URL地址，我们会对其进行解析"));
     urlLabel->setWordWrap(true);
 
     tipsLabel = new QLabel;
-    tipsLabel->setText(QStringLiteral("温馨提示：提供RSS服务的网页往往有个类似左边图片的图标，点击后复制网址就OK啦！"));
+    tipsLabel->setText(tr("温馨提示：提供RSS服务的网页往往有个类似左边图片的图标，点击后复制网址就OK啦！"));
     tipsLabel->setWordWrap(true);
 
     pixLabel = new QLabel;
@@ -389,7 +407,7 @@ void MainWindow::initGUI()
     pixLabel->resize(QSize(pix.width(), pix.height()));
 
     urlLineEdit = new QLineEdit;
-    urlLineEdit->setText(QStringLiteral("http://"));
+    urlLineEdit->setText(tr("http://"));
 
     QVBoxLayout *vLayout = new QVBoxLayout;
     vLayout->addWidget(urlLabel);
@@ -404,26 +422,27 @@ void MainWindow::initGUI()
 
     /*初始化新建推送向导的第二页*/
     page2 = new MyWizardPage;
-    page2->setTitle(QStringLiteral("给新的订阅取个名字吧"));
+    page2->setTitle(tr("给新的订阅取个名字吧"));
 
     nameLabel = new QLabel;
-    nameLabel->setText(QStringLiteral("请输入这个订阅的标题："));
+    nameLabel->setText(tr("请输入这个订阅的标题："));
 
     nameLineEdit = new QLineEdit;
-    nameLineEdit->setText(QStringLiteral("//修改订阅标题这个功能还在施工哦！"));
+    nameLineEdit->setText(tr("//修改订阅标题这个功能还在施工哦！"));
 
     chooseLabel = new QLabel;
-    chooseLabel->setText(QStringLiteral("请选择一个分类文件夹："));
+    chooseLabel->setText(tr("请选择一个分类文件夹："));
 
     /*将这个treewidget与主界面的treewidget内容同步*/
     folderTreeWidget = new QTreeWidget;
-    folderTreeWidget->setHeaderLabel(QStringLiteral("订阅列表"));
+    folderTreeWidget->setHeaderLabel(tr("订阅列表"));
     folderTreeWidget->setColumnCount(1);
     QHeaderView *header = new QHeaderView(Qt::Horizontal, folderTreeWidget);
+    header->setSectionResizeMode(QHeaderView::Stretch);
     header->setDefaultAlignment(Qt::AlignCenter);
     folderTreeWidget->setHeader(header);
 
-    refreshFolderTreeWidget();
+    //refreshFolderTreeWidget();
 
 //    int i = ui->treeWidget->topLevelItemCount();
 //    for (int j = 0; j < i; j++)
@@ -454,7 +473,7 @@ void MainWindow::initGUI()
 //    }
 
     newFolderBtn = new QPushButton;
-    newFolderBtn->setText(QStringLiteral("新建文件夹"));
+    newFolderBtn->setText(tr("新建文件夹"));
 
     QPixmap pixInPage2("://ico//image//RSS.png");
     pixLabelInPage2 = new QLabel;
@@ -485,10 +504,10 @@ void MainWindow::initGUI()
 
     /*初始化新建推送向导的第三页*/
     page3 = new MyWizardPage;
-    page3->setTitle(QStringLiteral("确认订阅"));
+    page3->setTitle(tr("确认订阅"));
 
     finishLabel = new QLabel;
-    finishLabel->setText(QStringLiteral("确定订阅点击下一步，我们将下载订阅文件，这可能需要消耗写时间..."));
+    finishLabel->setText(tr("确定订阅点击下一步，我们将下载订阅文件，这可能需要消耗写时间..."));
     finishLabel->setWordWrap(true);
 
     QPixmap pixInPage3("://ico//image//RSS.png");
@@ -503,10 +522,10 @@ void MainWindow::initGUI()
 
     /*初始化新建推送向导的第四页*/
 //    page4 = new MyWizardPage;
-//    page4->setTitle(QStringLiteral("正在下载"));
+//    page4->setTitle(tr("正在下载"));
 
 //    downloadLabel = new QLabel;
-//    downloadLabel->setText(QStringLiteral("请稍等片刻，正在下载订阅文件..."));
+//    downloadLabel->setText(tr("请稍等片刻，正在下载订阅文件..."));
 //    //downloadLabel->setAlignment(Qt::AlignLeft);
 
 //    pixLabelInPage4 = new QLabel;
@@ -530,10 +549,10 @@ void MainWindow::initGUI()
     wizard->setMaximumSize(750, 450);
     wizard->setMinimumSize(750, 450);
 
-    wizard->setButtonText(MyWizard::BackButton, QStringLiteral("上一步"));//设置向导中按钮的文字
-    wizard->setButtonText(MyWizard::NextButton, QStringLiteral("下一步"));
-    wizard->setButtonText(MyWizard::CancelButton, QStringLiteral("取消"));
-    wizard->setButtonText(MyWizard::FinishButton, QStringLiteral("完成"));
+    wizard->setButtonText(MyWizard::BackButton, tr("上一步"));//设置向导中按钮的文字
+    wizard->setButtonText(MyWizard::NextButton, tr("下一步"));
+    wizard->setButtonText(MyWizard::CancelButton, tr("取消"));
+    wizard->setButtonText(MyWizard::FinishButton, tr("完成"));
 
     QAbstractButton *finishBtn = this->wizard->button(MyWizard::FinishButton);
     connect(finishBtn, SIGNAL(clicked(bool)), this, SLOT(addSubcription()));//点击完成时新建推送
@@ -590,7 +609,7 @@ void MainWindow::setWindowFont()
 
     /*设置左下角QToolButton字体*/
     QFont toolBtnFont("宋体", 10);
-    ui->IRCToolBtn->setFont(toolBtnFont);
+    //ui->IRCToolBtn->setFont(toolBtnFont);
     ui->feedbackToolBtn->setFont(toolBtnFont);
     ui->releaseToolBtn->setFont(toolBtnFont);
     ui->shareToolBtn->setFont(toolBtnFont);
@@ -614,24 +633,24 @@ void MainWindow::addFolderToTreeWidget()
     QString foldername = folderUi.folderNameLineEdit->text();
     if (foldername == NULL)
     {
-        //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("名字不能为空哦！"));
-        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("名字不能为空哦！"));
+        //QMessageBox::warning(this, tr("警告"), tr("名字不能为空哦！"));
+        QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("名字不能为空哦！"));
         warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-        warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+        warning.setButtonText(QMessageBox::Ok, tr("确定"));
+        warning.setButtonText(QMessageBox::Cancel, tr("取消"));
         warning.setIcon(QMessageBox::Warning);
         warning.exec();
         return;
     }
     else if (treeWidgetHasRepeatChild(ui->treeWidget, foldername))
     {
-//        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("您输入的名字已经存在！"));
-//        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
+//        QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("您输入的名字已经存在！"));
+//        warning.setButtonText(QMessageBox::Ok, tr("确定"));
 //        warning.exec();
-        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("您输入的名字已经存在！"));
+        QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("您输入的名字已经存在！"));
         warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-        warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+        warning.setButtonText(QMessageBox::Ok, tr("确定"));
+        warning.setButtonText(QMessageBox::Cancel, tr("取消"));
         warning.setIcon(QMessageBox::Warning);
         warning.exec();
         return;
@@ -640,50 +659,62 @@ void MainWindow::addFolderToTreeWidget()
     {
 
         QTreeWidgetItem *folderItem = new QTreeWidgetItem;
+        QFont font("宋体", 12);
         folderItem->setText(0, foldername);
+        folderItem->setFont(0, font);
         folderItem->setIcon(0, QIcon("://ico//image//RSS1 (1).png"));
         ui->treeWidget->addTopLevelItem(folderItem);
 
         if (wizard->isEnabled())//在这里一定要保证wizard已经初始化，所以一定要在构造函数里面就初始化wizard不能在后面函数初始化
             refreshFolderTreeWidget();//必须刷新一遍foldertreewidget，直接添加item不会自动显示新加的Item，目前是个问题，我也不知道为什么
+
+        //更新数据库
+        int class_id = this->dbManager->getVacantClassId();
+        dbManager->insertToFolder(class_id, foldername);
     }
 }
 
 /*刷新folderwidget的内容*/
 void MainWindow::refreshFolderTreeWidget()
 {
+//    int count = folderTreeWidget->topLevelItemCount();
+//    if (count > 0)
+//    {
+//        for (int m = 0; m < count; m++)
+//        {
+//            folderTreeWidget->takeTopLevelItem(m);
+//        }
+//    }
+
     int i = ui->treeWidget->topLevelItemCount();
     for (int j = 0; j < i; j++)
     {
-        QStringList columnList;
+        QFont font("宋体", 12);
         QString folderNameString = ui->treeWidget->topLevelItem(j)->text(0);
-        columnList << folderNameString;
-        QTreeWidgetItem *item = new QTreeWidgetItem(columnList);
-
-        int childNum = ui->treeWidget->topLevelItem(j)->childCount();
-        if (childNum > 0)
-        {
-            for(int m = 0; m < childNum; m++)
-            {
-                QString childFolderNameString;
-                QStringList childColumnList;
-
-                childFolderNameString = ui->treeWidget->topLevelItem(j)->child(m)->text(0);
-                childColumnList << childFolderNameString;
-                QTreeWidgetItem *childItem = new QTreeWidgetItem(childColumnList);
-
-                item->addChild(childItem);
-            }
-        }
+        QTreeWidgetItem *item = new QTreeWidgetItem;
+        item->setText(0, folderNameString);
+        item->setIcon(0, QIcon("://ico//image//RSS1 (1).png"));
+        item->setFont(0, font);
 
         if (!treeWidgetHasRepeatChild(folderTreeWidget, folderNameString))
             folderTreeWidget->addTopLevelItem(item);
     }
 }
 
+/*清空folderwidget内容*/
+void MainWindow::clearFolderTreeWidget()
+{
+    int count = folderTreeWidget->topLevelItemCount();
+    for (int i = count; i >= 0; i--)
+    {
+        folderTreeWidget->takeTopLevelItem(i);
+    }
+}
+
 /*新建推送向导的界面显示*/
 void MainWindow::addSubcriptionActionTriggered()
 {
+    refreshFolderTreeWidget();
     wizard->restart();
     wizard->exec();
 }
@@ -716,10 +747,10 @@ void MainWindow::addSubcription()
         if (t.elapsed() > 20000)//当下载时间大于20s时提示下载时间太长
         {
             QMessageBox infoBox;
-            infoBox.setText(QStringLiteral("下载时间太长，是否继续？"));
+            infoBox.setText(tr("下载时间太长，是否继续？"));
             infoBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-            infoBox.setButtonText(QMessageBox::Ok, QStringLiteral("是"));
-            infoBox.setButtonText(QMessageBox::Cancel, QStringLiteral("否"));
+            infoBox.setButtonText(QMessageBox::Ok, tr("是"));
+            infoBox.setButtonText(QMessageBox::Cancel, tr("否"));
             QAbstractButton *okBtn = infoBox.button(QMessageBox::Ok);
             QAbstractButton *noBtn = infoBox.button(QMessageBox::Cancel);
             infoBox.exec();
@@ -738,37 +769,50 @@ void MainWindow::addSubcription()
         }
     }
     waitDialog->close();
-    QMessageBox::information(this, QStringLiteral("下载完成"), QStringLiteral("下载成功，点击文章查看..."), QMessageBox::Ok);
+    QMessageBox::information(this, tr("下载完成"), tr("下载成功，点击文章查看..."), QMessageBox::Ok);
 
-    QString filename = newFeed->fileAddr;
+    QString filepath = newFeed->fileAddr;
 
     if (folderTreeWidget->currentItem()->parent())
     {
-        //qDebug() << "foldertreewidget clicked wrong";
+        QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("只能选择文件夹哦！"));
+        warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+        warning.setButtonText(QMessageBox::Ok, tr("确定"));
+        warning.setButtonText(QMessageBox::Cancel, tr("取消"));
+        warning.setIcon(QMessageBox::Warning);
+        warning.exec();
         return;
     }
 
     QString currentTopLevelItemName = folderTreeWidget->currentItem()->text(0);//当前点击的toplevelitem的标题
     int index = getCurrentToplevelItemIndex(currentTopLevelItemName);//当前点击的toplevelitem的index
 
-    QFile file(filename);
+    QFile file(filepath);
     if (!file.open(QIODevice::ReadOnly))
         qDebug() << "open the downloaded file failed";
     XmlParser parser(&file);
+    QString title;
+    QList<QString> articleNamesList;
     if (parser.getFeedKind() == "atom")
     {
-        Atom atomFeed(filename);
+        Atom atomFeed(filepath);
+        QList<atomArticle> atomArticleList = atomFeed.getArtList();
+        for (int i = 0; i < atomArticleList.size(); i++)
+        {
+            articleNamesList.append(atomArticleList[i].title);
+        }
 
         QStringList textlist;
         textlist << atomFeed.getAtomTitle();
+        title = textlist.at(0);
 
         if (treeWidgetFolderHasRepeatChild(index, atomFeed.getAtomTitle()))
         {
-            //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("在这个分类中已经存在这个订阅了！"));
-            QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("在这个分类中已经存在这个订阅了！"));
+            //QMessageBox::warning(this, tr("警告"), tr("在这个分类中已经存在这个订阅了！"));
+            QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("在这个分类中已经存在这个订阅了！"));
             warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-            warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-            warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+            warning.setButtonText(QMessageBox::Ok, tr("确定"));
+            warning.setButtonText(QMessageBox::Cancel, tr("取消"));
             warning.setIcon(QMessageBox::Warning);
             warning.exec();
             return;
@@ -778,22 +822,28 @@ void MainWindow::addSubcription()
         item->setIcon(0, QIcon("://ico//image//RSStalk.png"));
         ui->treeWidget->topLevelItem(index)->addChild(item);
 
-        treeWidgetList.insert(textlist.at(0), filename);
+        treeWidgetList.insert(textlist.at(0), filepath);
     }
     else if (parser.getFeedKind() == "rss")
     {
-        Rss rssFeed(filename);
+        Rss rssFeed(filepath);
+        QList<rssArticle> rssArticleList = rssFeed.getArtList();
+        for (int i = 0; i < rssArticleList.size(); i++)
+        {
+            articleNamesList.append(rssArticleList[i].title);
+        }
 
         QStringList textlist;
         textlist << rssFeed.getRssTitle();
+        title = textlist.at(0);
 
         if (treeWidgetFolderHasRepeatChild(index, rssFeed.getRssTitle()))
         {
-            //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("在这个分类中已经存在这个订阅了！"));
-            QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("在这个分类中已经存在这个订阅了！"));
+            //QMessageBox::warning(this, tr("警告"), tr("在这个分类中已经存在这个订阅了！"));
+            QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("在这个分类中已经存在这个订阅了！"));
             warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-            warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-            warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+            warning.setButtonText(QMessageBox::Ok, tr("确定"));
+            warning.setButtonText(QMessageBox::Cancel, tr("取消"));
             warning.setIcon(QMessageBox::Warning);
             warning.exec();
             return;
@@ -803,9 +853,30 @@ void MainWindow::addSubcription()
         item->setIcon(0, QIcon("://ico//image//RSStalk.png"));
         ui->treeWidget->topLevelItem(index)->addChild(item);
 
-        treeWidgetList.insert(textlist.at(0), filename);
+        treeWidgetList.insert(textlist.at(0), filepath);
     }
 
+    //更新数据库
+    QString url = urlLineEdit->text();
+    int site_id = this->dbManager->getVacantSiteId();
+    int feed_id = this->dbManager->getVacantFeedId();
+    int class_id = this->dbManager->getClassId(currentTopLevelItemName);
+    int storage_id = this->dbManager->getVacantStorageId();
+    QString path = filepath;
+    QString lastBuildTime = this->dbManager->getDeleteFeedDate();
+
+    //qDebug() << url << site_id << feed_id << class_id << storage_id << path;
+    this->dbManager->insertToFeed(feed_id, class_id, title, "new", lastBuildTime);//插入feed
+    this->dbManager->insertToSite(feed_id, url);//插入site
+    this->dbManager->insertToStorage(storage_id, feed_id, path);//插入storage
+    this->dbManager->insertToStorage_Store_Feed(storage_id, feed_id);//插入storage_store_feed
+    this->dbManager->insertToSite_Donate_Feed(site_id, feed_id);//插入site_donate_feed
+    for (int j = 0; j < articleNamesList.size(); j++)//插入contents
+    {
+        int content_id = this->dbManager->getVacantContentId();
+        this->dbManager->insertToContents(content_id, articleNamesList[j], 0, 0, 0);
+        this->dbManager->insertToFeed_Has_Contents(feed_id, content_id);
+    }
 }
 
 /*获取向导中folderwidget当前点击的toplevelitem的index*/
@@ -829,11 +900,11 @@ void MainWindow::lineEditUrlEntered()
 
     if (ui->webEditLine->text() == NULL)
     {
-        //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("输入的网址不能为空哦！"));
-        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("输入的网址不能为空哦！"));
+        //QMessageBox::warning(this, tr("警告"), tr("输入的网址不能为空哦！"));
+        QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("输入的网址不能为空哦！"));
         warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-        warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+        warning.setButtonText(QMessageBox::Ok, tr("确定"));
+        warning.setButtonText(QMessageBox::Cancel, tr("取消"));
         warning.setIcon(QMessageBox::Warning);
         warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
         warning.exec();
@@ -845,10 +916,10 @@ void MainWindow::lineEditUrlEntered()
         url = "http://" + ui->webEditLine->text();
     else
     {
-        //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("输入的网址有误！"));
-        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("输入的网址有误！"));
-        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-        warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+        //QMessageBox::warning(this, tr("警告"), tr("输入的网址有误！"));
+        QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("输入的网址有误！"));
+        warning.setButtonText(QMessageBox::Ok, tr("确定"));
+        warning.setButtonText(QMessageBox::Cancel, tr("取消"));
         warning.setIcon(QMessageBox::Warning);
         warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
         warning.exec();
@@ -856,7 +927,12 @@ void MainWindow::lineEditUrlEntered()
     }
 
     ui->webView->load(url);
-    ui->tabWidget->setTabText(0, QStringLiteral("浏览网页"));
+    ui->tabWidget->setTabText(0, tr("浏览网页"));
+
+    //更新数据库
+    int id = this->dbManager->getVacantBrowserHistoryId();
+    QString date = this->dbManager->getDeleteFeedDate();
+    this->dbManager->insertToBrowserHistory(id, url, date);
 }
 
 /*重载toolbutton的mousePressEvent函数，点击后发送myclicked信号*/
@@ -932,6 +1008,7 @@ void MainWindow::on_treeWidget_rightbtn_clicked(QPoint pos)
     {
         treeWidgetSubMenu = new QMenu;
         treeWidgetSubMenu->addAction(ui->deleteSubAction);
+        treeWidgetSubMenu->addAction(ui->renameAction);
         treeWidgetSubMenu->exec(QCursor::pos());
         return;
     }
@@ -940,6 +1017,7 @@ void MainWindow::on_treeWidget_rightbtn_clicked(QPoint pos)
         treeWidgetMenu = new QMenu;
         treeWidgetMenu->addAction(ui->deleteFolderAction);
         treeWidgetMenu->addAction(ui->newSubscriptionAcion);
+        treeWidgetMenu->addAction(ui->renameAction);
         treeWidgetMenu->exec(QCursor::pos());
         return;
     }
@@ -955,6 +1033,10 @@ void MainWindow::on_deleteAction_triggered()
 
     if (!curItem->parent())
     {
+        //更新数据库
+        int class_id = this->dbManager->getClassId(curItem->text(0));
+        //qDebug() << class_id;
+
         int childNum = curItem->childCount();//先删除子item
 
         if (childNum != 0)
@@ -972,22 +1054,43 @@ void MainWindow::on_deleteAction_triggered()
                 }
             }
 
-            while (childNum >= 0)
+            //更新数据库
+            for (int i = 0; i < childNum; i++)
+            {
+                QString title = ui->treeWidget->currentItem()->child(i)->text(0);
+                int feed_id = this->dbManager->getFeedId(class_id, title);
+                //qDebug() << title << feed_id;
+                this->dbManager->deleteFeed(feed_id);
+            }
+
+            while (childNum >= 0)//从界面中删除
             {
                 curItem->takeChild(childNum);
                 childNum--;
             }
         }
-        ui->treeWidget->takeTopLevelItem(ui->treeWidget->currentIndex().row());//删除toplevelitem
+
+        this->dbManager->deleteFolder(class_id);//更新数据库：从class中删除对应元祖
+        ui->treeWidget->takeTopLevelItem(ui->treeWidget->currentIndex().row());//删除界面中toplevelitem
 
         if (ui->webView->url() != QUrl("http://sw.scu.edu.cn/"))//网页初始化
         {
             ui->webView->load(QUrl("http://sw.scu.edu.cn/"));
-            ui->tabWidget->setTabText(0, QStringLiteral("软件学院"));
+            ui->tabWidget->setTabText(0, tr("软件学院"));
         }
+        clearFolderTreeWidget();
     }
     else
     {
+
+        //更新数据库，必须先更新数据库才能删除
+        QString title = curItem->text(0);
+        QString classname = curItem->parent()->text(0);
+        int class_id = this->dbManager->getClassId(classname);
+        int feed_id = this->dbManager->getFeedId(class_id, title);
+        //qDebug() << class_id << feed_id << "in test.";
+        this->dbManager->deleteFeed(feed_id);//删除feed及其相关的其他列表
+
         curItem->parent()->takeChild(ui->treeWidget->currentIndex().row());
 
         int toolItemNum = ui->toolBox->count();//删除一个订阅的时候，删除中间toolbox对应文章列表
@@ -1002,7 +1105,7 @@ void MainWindow::on_deleteAction_triggered()
         if (ui->webView->url() != QUrl("http://sw.scu.edu.cn/"))//网页初始化
         {
             ui->webView->load(QUrl("http://sw.scu.edu.cn/"));
-            ui->tabWidget->setTabText(0, QStringLiteral("软件学院"));
+            ui->tabWidget->setTabText(0, tr("软件学院"));
         }
     }
 }
@@ -1018,7 +1121,7 @@ void MainWindow::on_deleteToolBox_triggered()
     if (ui->webView->url() != QUrl("http://sw.scu.edu.cn/"))
     {
         ui->webView->load(QUrl("http://sw.scu.edu.cn/"));
-        ui->tabWidget->setTabText(0, QStringLiteral("软件学院"));
+        ui->tabWidget->setTabText(0, tr("软件学院"));
     }
 
     ui->toolBox->removeItem(index);
@@ -1032,10 +1135,10 @@ void MainWindow::subsUrlEdited()
 
    if (!reg.exactMatch(url))
    {
-       //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("您输入的网址有误！请重新输入..."));
-       QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("您输入的网址有误！请重新输入..."));
-       warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-       warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+       //QMessageBox::warning(this, tr("警告"), tr("您输入的网址有误！请重新输入..."));
+       QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("您输入的网址有误！请重新输入..."));
+       warning.setButtonText(QMessageBox::Ok, tr("确定"));
+       warning.setButtonText(QMessageBox::Cancel, tr("取消"));
        warning.setIcon(QMessageBox::Warning);
        warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
        warning.exec();
@@ -1045,10 +1148,10 @@ void MainWindow::subsUrlEdited()
 
    if ((wizard->currentId() == 2) && (this->folderTreeWidget->currentItem() == NULL))
    {
-       //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("一定要选择一个分类哦！"));
-       QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("一定要选择一个分类哦！"));
-       warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-       warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+       //QMessageBox::warning(this, tr("警告"), tr("一定要选择一个分类哦！"));
+       QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("一定要选择一个分类哦！"));
+       warning.setButtonText(QMessageBox::Ok, tr("确定"));
+       warning.setButtonText(QMessageBox::Cancel, tr("取消"));
        warning.setIcon(QMessageBox::Warning);
        warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
        warning.exec();
@@ -1058,10 +1161,10 @@ void MainWindow::subsUrlEdited()
 
    if ((wizard->currentId() == 2) && (this->folderTreeWidget->currentItem()->parent()))
    {
-       //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("请选择一个分类而不是一个订阅哦！"));
-       QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("请选择一个分裂而不是一个订阅哦！"));
-       warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-       warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+       //QMessageBox::warning(this, tr("警告"), tr("请选择一个分类而不是一个订阅哦！"));
+       QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("请选择一个分裂而不是一个订阅哦！"));
+       warning.setButtonText(QMessageBox::Ok, tr("确定"));
+       warning.setButtonText(QMessageBox::Cancel, tr("取消"));
        warning.setIcon(QMessageBox::Warning);
        warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
        warning.exec();
@@ -1073,10 +1176,10 @@ void MainWindow::subsUrlEdited()
 /*显示功能尚未完成的对话框*/
 void MainWindow::showHasNotFinishedInfo()
 {
-    //QMessageBox::warning(this, QStringLiteral("Sorry"), QStringLiteral("功能还在建设中哦！"));
-    QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("功能还在建设中哦！"));
-    warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-    warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+    //QMessageBox::warning(this, tr("Sorry"), tr("功能还在建设中哦！"));
+    QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("功能还在建设中哦！"));
+    warning.setButtonText(QMessageBox::Ok, tr("确定"));
+    warning.setButtonText(QMessageBox::Cancel, tr("取消"));
     warning.setIcon(QMessageBox::Warning);
     warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
     warning.exec();
@@ -1087,10 +1190,10 @@ void MyDialog::closeEvent(QCloseEvent *event)
 {
     if (fromUserClicked)
     {
-        QMessageBox warning(QMessageBox::Warning, QStringLiteral("警告"), QStringLiteral("确定退出目前下载？"));
+        QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("确定退出目前下载？"));
         warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-        warning.setButtonText(QMessageBox::Ok, QStringLiteral("确定"));
-        warning.setButtonText(QMessageBox::Cancel, QStringLiteral("取消"));
+        warning.setButtonText(QMessageBox::Ok, tr("确定"));
+        warning.setButtonText(QMessageBox::Cancel, tr("取消"));
         warning.setIcon(QMessageBox::Warning);
         warning.exec();
 
@@ -1116,4 +1219,90 @@ void MyDialog::closeEvent(QCloseEvent *event)
         event->accept();
     }
 
+}
+
+/*从数据库中读取数据并显示*/
+void MainWindow::showDefaultFromDB()
+{
+    QList<QString> folderNameList = this->dbManager->getFolderNameList();
+    QList<QString> subsNameList;
+    //qDebug() << folderNameList.size() << folderNameList[0] << folderNameList[1] << folderNameList[2];
+    QFont font("宋体", 12);
+
+    for (int i = 0; i < folderNameList.size(); i++)//显示分类的标题
+    {
+        QTreeWidgetItem *item = new QTreeWidgetItem;
+        item->setText(0, folderNameList[i]);
+        item->setFont(0, font);
+        item->setIcon(0, QIcon("://ico//image//RSS1 (5).png"));
+        ui->treeWidget->addTopLevelItem(item);
+    }
+
+    for (int i = 0; i < folderNameList.size(); i++)
+    {
+        subsNameList = this->dbManager->getSubsNameList(i);
+        for (int j = 0; j < subsNameList.size(); j++)
+        {
+            QTreeWidgetItem *item = new QTreeWidgetItem;
+            item->setText(0, subsNameList[j]);
+            item->setFont(0, font);
+            item->setIcon(0, QIcon("://ico//image//RSStalk.png"));
+            ui->treeWidget->topLevelItem(i)->addChild(item);
+        }
+    }
+}
+
+/*槽函数：修改文件夹和订阅的名字*/
+void MainWindow::renameActionTriggered()
+{
+    renameDialog->show();
+    QAbstractButton *okBtn = renameUi.buttonBox->button(QDialogButtonBox::Ok);
+    connect(okBtn, SIGNAL(clicked(bool)), this, SLOT(renameDBRefresh()));
+    connect(renameUi.lineEdit, SIGNAL(returnPressed()), this, SLOT(renameDBRefresh()));
+}
+
+/*槽函数：重命名后更新数据库*/
+void MainWindow::renameDBRefresh()
+{
+    QTreeWidgetItem *curItem = ui->treeWidget->currentItem();
+    QString newName = renameUi.lineEdit->text();
+    if (newName == NULL)
+    {
+        QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("名字不能为空哦！"));
+        warning.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+        warning.setButtonText(QMessageBox::Ok, tr("确定"));
+        warning.setButtonText(QMessageBox::Cancel, tr("取消"));
+        warning.setIcon(QMessageBox::Warning);
+        warning.exec();
+        renameDialog->show();
+        return;
+    }
+
+    if (!curItem->parent())//文件夹重命名
+    {
+        QString title = curItem->text(0);
+        int class_id = this->dbManager->getClassId(title);
+        this->dbManager->renameClassName(class_id, newName);
+        curItem->setText(0, newName);
+    }
+    else if (curItem->parent())//订阅重命名
+    {
+        QString feedTitle = curItem->text(0);
+        int class_id = this->dbManager->getClassId(curItem->parent()->text(0));
+        int feed_id = this->dbManager->getFeedId(class_id, feedTitle);
+        this->dbManager->renameFeedName(feed_id, newName);
+        curItem->setText(0, newName);
+
+        int toolItemNum = ui->toolBox->count();//修改中间的toolbox显示标题
+        for (int j = 0; j < toolItemNum; j++)
+        {
+            if (ui->toolBox->itemText(j) == feedTitle)
+            {
+                ui->toolBox->setItemText(j, newName);
+                continue;
+            }
+        }
+    }
+    else if (!curItem)
+        return;
 }

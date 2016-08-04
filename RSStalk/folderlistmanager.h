@@ -1,4 +1,7 @@
-﻿#ifndef FOLDERLISTMANAGER_H
+﻿#if _MSC_VER >= 1600
+#pragma execution_character_set("utf-8")
+#endif
+#ifndef FOLDERLISTMANAGER_H
 #define FOLDERLISTMANAGER_H
 
 #include <QList>

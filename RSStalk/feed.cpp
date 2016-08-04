@@ -1,4 +1,7 @@
-﻿#include "feed.h"
+﻿#if _MSC_VER >= 1600
+#pragma execution_character_set("utf-8")
+#endif
+#include "feed.h"
 
 
 /*初始化Feed类*/
@@ -60,7 +63,7 @@ DownloadManager::DownloadManager()
     //qDebug() << "enter 1";
     manager = new QNetworkAccessManager(this);
     connect(manager, SIGNAL(finished(QNetworkReply*)),this, SLOT(downloadFinished(QNetworkReply*)));
-    connect(this, SIGNAL(downloadFinishedSignal()), this, SLOT(setFileAddrSlot()));
+    connect(this, SIGNAL(downloadFinishedSignal(QString)), this, SLOT(setFileAddrSlot(QStrings)));
 }
 
 void DownloadManager::doDownload(const QUrl url)

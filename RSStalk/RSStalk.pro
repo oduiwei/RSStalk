@@ -8,6 +8,7 @@ QT       += core gui
 QT += webenginewidgets
 QT += xml
 QT += network
+QT += sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -22,7 +23,8 @@ SOURCES += main.cpp\
     atom.cpp \
     feedlist.cpp \
     folderlistmanager.cpp \
-    mylineedit.cpp
+    mylineedit.cpp \
+    dbmanager.cpp
 
 HEADERS  += mainwindow.h \
     feed.h \
@@ -30,10 +32,12 @@ HEADERS  += mainwindow.h \
     atom.h \
     feedlist.h \
     folderlistmanager.h \
-    mylineedit.h
+    mylineedit.h \
+    dbmanager.h
 
 FORMS    += mainwindow.ui \
-    addfolder.ui
+    addfolder.ui \
+    renamedialog.ui
 
 RESOURCES += \
     img.qrc \

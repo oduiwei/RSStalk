@@ -1,4 +1,7 @@
-﻿#ifndef RSS_H
+﻿#if _MSC_VER >= 1600
+#pragma execution_character_set("utf-8")
+#endif
+#ifndef RSS_H
 #define RSS_H
 
 #include "feed.h"
