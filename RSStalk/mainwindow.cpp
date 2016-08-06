@@ -53,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
     waitDialog->setWindowTitle(tr("正在下载..."));
     waitDialog->setWindowFlags(Qt::WindowCloseButtonHint);
 
-    dbManager = new DBManager();//初始化数据库操控类
+    dbManager = new DBManager();//初始化数据库操控
 
     initGUI();
     initWindowIcon();

@@ -71,8 +71,11 @@ void DownloadManager::doDownload(const QUrl url)
     //qDebug() << "enter 2";
     filename = saveFileName(url);
     //qDebug() << filename;
-
+    QDir xmlDir;
+    xmlDir.mkdir("XML");
     file.setFileName(filename);
+    xmlDir.setCurrent("XML");
+    qDebug() << xmlDir.currentPath();
     if (!file.open(QIODevice::ReadWrite)) {
         //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("打开文件错误！"));
         return;

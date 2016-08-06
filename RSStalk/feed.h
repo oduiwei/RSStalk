@@ -19,6 +19,7 @@
 #include <QXmlStreamReader>
 #include <QXmlStreamAttributes>
 #include <QMessageBox>
+#include <QDir>
 
 #define read 1 //标记是否为已读
 #define unread 0

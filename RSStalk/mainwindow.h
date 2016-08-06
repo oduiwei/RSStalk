@@ -39,6 +39,7 @@
 #include <QRegExp>
 #include <QKeyEvent>
 #include <QCloseEvent>
+#include <QDir>
 #include "ui_addfolder.h"
 #include "feed.h"
 #include "rss.h"
