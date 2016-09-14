@@ -2,6 +2,7 @@
 #pragma execution_character_set("utf-8")
 #endif
 #include "feed.h"
+#include <QEventLoop>
 
 
 /*初始化Feed类*/
@@ -16,6 +17,7 @@ Feed::Feed(QUrl url)
     //后面的qnetworkaccessmanager finished信号不能触发
     download->doDownload(url);
     connect(download, SIGNAL(downloadFinishedSignal(QString)), this, SLOT(setFileAddr(QString)));
+    connect(download,SIGNAL(downloadOverTime(QUrl)), this, SLOT(processDownloadOverTime(QUrl)));
 }
 
 void Feed::setFileAddr(QString addr)
@@ -23,6 +25,8 @@ void Feed::setFileAddr(QString addr)
     QFileInfo info(addr);
     fileAddr = info.absoluteFilePath();
     alreadyDownload = true;
+    emit feedDownloaded();
+    //qDebug() << "already emit";
 }
 
 QString Feed::getTitle()
@@ -55,6 +59,11 @@ void Feed::setReadMark(bool readOrNot)
     readmark = readOrNot;
 }
 
+void Feed::processDownloadOverTime(QUrl url)
+{
+    overTime = true;
+    emit downloadOverTime(url);
+}
 
 
 /*初始化DownlaodManager类*/
@@ -63,7 +72,7 @@ DownloadManager::DownloadManager()
     //qDebug() << "enter 1";
     manager = new QNetworkAccessManager(this);
     connect(manager, SIGNAL(finished(QNetworkReply*)),this, SLOT(downloadFinished(QNetworkReply*)));
-    connect(this, SIGNAL(downloadFinishedSignal(QString)), this, SLOT(setFileAddrSlot(QStrings)));
+    connect(this, SIGNAL(downloadFinishedSignal(QString)), this, SLOT(setFileAddrSlot(QString)));
 }
 
 void DownloadManager::doDownload(const QUrl url)
@@ -72,10 +81,14 @@ void DownloadManager::doDownload(const QUrl url)
     filename = saveFileName(url);
     //qDebug() << filename;
     QDir xmlDir;
-    xmlDir.mkdir("XML");
+    //qDebug() << xmlDir.currentPath();
+    if (!xmlDir.exists("XML"))
+    {
+        xmlDir.mkdir("XML");
+    }
     file.setFileName(filename);
     xmlDir.setCurrent("XML");
-    qDebug() << xmlDir.currentPath();
+
     if (!file.open(QIODevice::ReadWrite)) {
         //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("打开文件错误！"));
         return;
@@ -125,6 +138,8 @@ void DownloadManager::downloadFinished(QNetworkReply *reply)
 
     rename();
     //qDebug() << newName;
+    QDir dir;
+    dir.setCurrent("../");
 }
 
 /*给下载好的文件重命名，名字为xml文件的标题*/

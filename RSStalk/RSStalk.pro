@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     feedlist.cpp \
     folderlistmanager.cpp \
     mylineedit.cpp \
-    dbmanager.cpp
+    dbmanager.cpp \
+    updatethread.cpp
 
 HEADERS  += mainwindow.h \
     feed.h \
@@ -33,7 +34,8 @@ HEADERS  += mainwindow.h \
     feedlist.h \
     folderlistmanager.h \
     mylineedit.h \
-    dbmanager.h
+    dbmanager.h \
+    updatethread.h
 
 FORMS    += mainwindow.ui \
     addfolder.ui \

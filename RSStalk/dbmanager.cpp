@@ -557,6 +557,24 @@ QList<int> DBManager::getBrowserHistoryIdList()
     return list;
 }
 
+/*获取指定feed_id的订阅的文章标题列表*/
+//QList<int> DBManager::getFeedContentIdList(int feed_id)
+//{
+//    QSqlQuery query(db);
+//    QList<int> list;
+//    bool ok = query.exec(QString("SELECT content_id FROM feed_own_content where feed_id=%1;").arg(feed_id));
+//    if (!ok)
+//    {
+//        QSqlError lastError = query.lastError();
+//        qDebug() << lastError.driverText() << "\nfail in getFeedContentNameList.";
+//    }
+//    while(query.next())
+//    {
+//        list.append(query.value(0).toInt());
+//    }
+//    return list;
+//}
+
 QString DBManager::getFeedPath(int class_id, QString title)
 {
     QSqlQuery query(db);
@@ -569,6 +587,57 @@ QString DBManager::getFeedPath(int class_id, QString title)
     {
         QSqlError lastError = query.lastError();
         qDebug() << lastError.driverText() << "\nfail in getFeedPath.";
+    }
+    if (query.next())
+        path = query.value(0).toString();
+    return path;
+}
+
+QString DBManager::getFeedName(int feed_id)
+{
+    QSqlQuery query(db);
+    QString title;
+
+    bool ok = query.exec(QString("SELECT title FROM feed where feed_id = %1;").arg(feed_id));
+
+    if (!ok)
+    {
+        QSqlError lastError = query.lastError();
+        qDebug() << lastError.driverText() << "\nfail in getFeedName.";
+    }
+    if (query.next())
+        title = query.value(0).toString();
+    return title;
+}
+
+QString DBManager::getFeedUrl(int feed_id)
+{
+    QSqlQuery query(db);
+    QString url;
+
+    bool ok = query.exec(QString("SELECT url FROM site where id = (select site_id from site_donate_feed where feed_id = %1);").arg(feed_id));
+
+    if (!ok)
+    {
+        QSqlError lastError = query.lastError();
+        qDebug() << lastError.driverText() << "\nfail in getFeedUrl.";
+    }
+    if (query.next())
+        url = query.value(0).toString();
+    return url;
+}
+
+QString DBManager::getFeedPath(int feed_id)
+{
+    QSqlQuery query(db);
+    QString path;
+
+    bool ok = query.exec(QString("SELECT path FROM storage where feed_id = %1;").arg(feed_id));
+
+    if (!ok)
+    {
+        QSqlError lastError = query.lastError();
+        qDebug() << lastError.driverText() << "\nfail in getFeedPath2.";
     }
     if (query.next())
         path = query.value(0).toString();
@@ -710,6 +779,25 @@ void DBManager::deleteFolder(int class_id)
     }
 }
 
+void DBManager::deleteFeedContent(int feed_id)
+{
+    QSqlQuery query(db);
+    /*这里必须先删除关系表内容，后删除contents内容*/
+    bool ok;
+    QList<int> contentIdList = this->getContentId(feed_id);
+    bool ok2 = query.exec(QString("delete from feed_own_content where feed_id=%1").arg(feed_id));
+    int length = contentIdList.size();
+    for(int i = 0; i < length; i++)
+    {
+        ok = query.exec(QString("delete from contents where id=%1").arg(contentIdList.at(i)));
+        if (!ok || !ok2)
+        {
+            QSqlError lastError = query.lastError();
+            qDebug() << lastError.driverText() << "\nfail in deleteFeedContent.";
+        }
+    }
+}
+
 QString DBManager::getDeleteFeedTitle(int feed_id)
 {
     QSqlQuery query(db);
@@ -797,5 +885,16 @@ void DBManager::renameFeedName(int feed_id, QString name)
     {
         QSqlError lastError = query.lastError();
         qDebug() << lastError.driverText() << "\nfail in renameFeedName.";
+    }
+}
+
+void DBManager::updateFeedPath(int feed_id, QString path)
+{
+    QSqlQuery query(db);
+    bool ok = query.exec(QString("update storage set path = '%1' where feed_id = %2;").arg(path).arg(feed_id));
+    if (!ok)
+    {
+        QSqlError lastError = query.lastError();
+        qDebug() << lastError.driverText() << "\nfail in renameFeedPath.";
     }
 }

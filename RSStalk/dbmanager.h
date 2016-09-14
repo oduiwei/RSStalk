@@ -43,9 +43,11 @@ public:
     void deleteFeed(int);
     void deleteFolder(int);
     void deleteTable(QString tableName);
+    void deleteFeedContent(int);
 
     void renameClassName(int, QString);
     void renameFeedName(int, QString);
+    void updateFeedPath(int, QString);
 
     int getTupleNumInSite();
     int getTupleNumInFeed();
@@ -72,11 +74,15 @@ public:
     QList<int> getContentIdList();
     QList<int> getDeleteFeedIdList();
     QList<int> getBrowserHistoryIdList();
+    //QList<int> getFeedContentIdList(int);
     QList<QString> getFolderNameList();
     QList<QString> getSubsNameList(int);
     QList<QString> getTableNames();
 
     QString getFeedPath(int, QString);
+    QString getFeedName(int);
+    QString getFeedUrl(int);
+    QString getFeedPath(int);
     QString getDeleteFeedTitle(int);
     int getDeleteFeedClass_Id(int);
     QString getDeleteFeedUrl(int);

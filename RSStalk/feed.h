@@ -46,9 +46,14 @@ public:
     bool readmark = unread;
     QString fileAddr;
     bool alreadyDownload = false;
+    bool overTime = false;
 
 public slots:
     void setFileAddr(QString);
+    void processDownloadOverTime(QUrl);
+signals:
+    void feedDownloaded();
+    void downloadOverTime(QUrl);
 };
 
 /*DownloadManager类，负责下载文件*/
@@ -72,6 +77,7 @@ public:
 
 signals:
     void downloadFinishedSignal(QString);
+    void downloadOverTime(QUrl);
 
 public slots:
     void downloadFinished(QNetworkReply*);

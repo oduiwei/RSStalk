@@ -46,6 +46,7 @@
 #include "atom.h"
 #include "dbmanager.h"
 #include "ui_renamedialog.h"
+#include "updatethread.h"
 
 namespace Ui {
 class MainWindow;
@@ -109,8 +110,6 @@ private:
     MyWizardPage *page1;
     MyWizardPage *page2;
     MyWizardPage *page3;
-    //MyWizardPage *page4;
-
     QString urlFrInput;//从向导中获取出的字符串
     QString subsNameFrInput;
     QString folderNameFrInput;
@@ -130,10 +129,6 @@ private:
     QLabel *finishLabel;//page3控件
     QLabel *pixLabelInPage3;
 
-//    QLabel *pixLabelInPage4;//page4控件
-//    QLabel *downloadLabel;
-//    QMovie *waitMovie;
-
     MyDialog *waitDialog;
     QLabel *waitGifLabel;
     QLabel *waitWordsLabel;
@@ -144,6 +139,14 @@ private:
     Feed *newFeed;//新建推送的feed
 
     QMap<QString, QString> treeWidgetList;
+    UpdateThread *updateThread;
+    QDialog *updateDialog;
+    QLabel *wordsLabel;
+    QLabel *gifLabel;
+    QMovie *waitGif;
+    QMessageBox *noFeedBox;
+    QMessageBox *updateSuccessBox;
+    QMessageBox *updateFailBox;
 
 private slots:
     void addFolderActionTriggered();
@@ -160,6 +163,9 @@ private slots:
     void subsUrlEdited();
 
     void showHasNotFinishedInfo();
+    void updateFailed(int);//更新失败槽函数
+    void noFeedSlots();
+    void updateDialogSlots(QString);
 
 public slots:
     void addSubcription();
