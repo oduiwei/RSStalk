@@ -102,7 +102,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->refreshToolBtn, SIGNAL(clicked(bool)), ui->webView, SLOT(reload()));
 
     connect(ui->manageCacheAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
-    connect(ui->markAllReadAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->markAllReadAction, SIGNAL(triggered(bool)), this, SLOT(markAllReadContentsRead()));
     connect(ui->copyAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->cutAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->doAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
@@ -138,44 +138,6 @@ void MainWindow::initWindowIcon()
     this->wizard->setWindowIcon(QIcon("://ico//image//rss_panda.png"));
 }
 
-/*添加默认的几个订阅，供展示用，后面可以删除*/
-void MainWindow::showParseResultExample()
-{
-    QString AtomFileName = "://feed//atom.xml";
-    QString RssFileName = "://feed//feed.xml";
-    QString newsFileName = "://feed//ns.xml";
-
-    QStringList feedTitleText_0;
-    QStringList feedTitleText_1;
-    QStringList feedTitleText_2;
-
-    Rss rssfile(RssFileName);
-    feedTitleText_0 << rssfile.getRssTitle();
-    //rssList = qobject_cast<QList<article> >(rssfile.getArtList());
-
-    Atom atomfile(AtomFileName);
-    feedTitleText_1 << atomfile.getAtomTitle();
-    //atomList = qobject_cast<QList<article> >(atomfile.getArtList());
-
-    Rss newsfile(newsFileName);
-    feedTitleText_2 << newsfile.getRssTitle();
-
-    QTreeWidgetItem *item0 = new QTreeWidgetItem(feedTitleText_0, 0);//添加两个treewidget
-    QTreeWidgetItem *item1 = new QTreeWidgetItem(feedTitleText_1, 0);
-    QTreeWidgetItem *item2 = new QTreeWidgetItem(feedTitleText_2, 0);
-    item0->setIcon(0, QIcon("://ico//image//RSStalk.png"));
-    item1->setIcon(0, QIcon("://ico//image//RSStalk.png"));
-    item2->setIcon(0, QIcon("://ico//image//RSStalk.png"));
-    //qDebug() << ui->treeWidget->topLevelItem(0)->text(0);打印出界面中treewidget的第0列，第0个子item
-    ui->treeWidget->topLevelItem(0)->addChild(item0);
-    ui->treeWidget->topLevelItem(0)->addChild(item1);
-    ui->treeWidget->topLevelItem(1)->addChild(item2);
-
-    treeWidgetList.insert(feedTitleText_0.at(0), RssFileName);//给map赋值，能够通过标题名字来找到文件地址
-    treeWidgetList.insert(feedTitleText_1.at(0), AtomFileName);
-    treeWidgetList.insert(feedTitleText_2.at(0), newsFileName);
-}
-
 /*槽函数：当点击treewidget中的某个订阅时，在toolbox中显示该订阅所有的文章标题*/
 void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
 {
@@ -184,88 +146,125 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
         QString titleClicked;
         titleClicked = item->text(column);//获取当前点击的文章的标题
         int class_id = this->dbManager->getClassId(item->parent()->text(0));
-        QString path = this->dbManager->getFeedPath(class_id, titleClicked);
+        int feed_id = this->dbManager->getFeedId(class_id, titleClicked);
+        //QString path = this->dbManager->getFeedPath(class_id, titleClicked);
         //qDebug() << path << " in mainwindow";
+        QList<int> contentIdList = this->dbManager->getContentId(feed_id);
 
-        QFile feedfile(path);
-        if (!feedfile.open(QIODevice::ReadOnly))
+        this->currentFeedIdList.append(feed_id);
+
+        QGroupBox *artBox = new QGroupBox;
+        QVBoxLayout *vLayout = new QVBoxLayout(artBox);
+        for (int i = 0; i < contentIdList.size(); i++)
         {
-            qDebug() << "open file failed";
+            QString title = this->dbManager->getContentName(contentIdList[i]);
+            int readornot = this->dbManager->getContentReadState(contentIdList[i]);
+            MyToolButton *titleButton = new MyToolButton;
+            titleButton->feedtitle = titleClicked;
+            titleButton->pos = i;
+            titleButton->setAutoRaise(true);
+            if (readornot == 0)
+                title = "[未读] " + title;
+            else if (readornot == 1)
+                title = "[已读] " + title;
+            titleButton->setText(title);
+
+            vLayout->addWidget(titleButton);
+
+            connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
         }
-
-        XmlParser parser(&feedfile);           //用来判断点击的文章是属于rss还是atom
-
-        if (parser.getFeedKind() == "rss")
+        if (toolBoxHasRepeatChild(titleClicked))
         {
-            Rss rss(path);
-
-            QGroupBox *artBox = new QGroupBox;
-            QVBoxLayout *vLayout = new QVBoxLayout(artBox);
-            //vLayout->addStretch(1);
-
-            QList<rssArticle> rssList = rss.getArtList();
-
-            for (int posi = 0; posi < rssList.size(); posi++)
-            {
-                MyToolButton *titleButton = new MyToolButton;
-                titleButton->feedtitle = titleClicked;
-                titleButton->pos = posi;
-                titleButton->setAutoRaise(true);
-                titleButton->setText(rssList[posi].title);
-
-                vLayout->addWidget(titleButton);
-
-                connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
-            }
-
-            if (toolBoxHasRepeatChild(titleClicked))//当点击的订阅在toolbox中存在的时候获取存在的index并设置当前index为index
-            {
-                int index = childItemIndexInToolBox(titleClicked);
-                ui->toolBox->setCurrentIndex(index);
-            }
-            else
-            {
-                ui->toolBox->addItem(artBox, titleClicked);
-                ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
-            }
+            int index = childItemIndexInToolBox(titleClicked);
+            ui->toolBox->setCurrentIndex(index);
         }
-        else if (parser.getFeedKind() == "atom")
+        else
         {
-            Atom atom(path);
-
-            QGroupBox *artBox = new QGroupBox;
-            QVBoxLayout *vLayout = new QVBoxLayout(artBox);
-
-            QList<atomArticle> atomList = atom.getArtList();
-
-            for (int posi = 0; posi < atomList.size(); posi++)
-            {
-                MyToolButton *titleButton = new MyToolButton;
-                titleButton->feedtitle = titleClicked;
-                titleButton->pos = posi;
-                titleButton->setAutoRaise(true);
-                titleButton->setText(atomList[posi].title);
-
-                vLayout->addWidget(titleButton);
-
-                connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
-            }
-
-            if (toolBoxHasRepeatChild(titleClicked))
-            {
-                int index = childItemIndexInToolBox(titleClicked);
-                ui->toolBox->setCurrentIndex(index);
-            }
-            else
-            {
-                ui->toolBox->addItem(artBox, titleClicked);
-                ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
-            }
+            ui->toolBox->addItem(artBox, titleClicked);
+            ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
         }
-
-        feedfile.close();
     }
 }
+
+//        QFile feedfile(path);
+//        if (!feedfile.open(QIODevice::ReadOnly))
+//        {
+//            qDebug() << "open file failed";
+//        }
+
+//        XmlParser parser(&feedfile);           //用来判断点击的文章是属于rss还是atom
+
+//        if (parser.getFeedKind() == "rss")
+//        {
+//            Rss rss(path);
+
+//            QGroupBox *artBox = new QGroupBox;
+//            QVBoxLayout *vLayout = new QVBoxLayout(artBox);
+//            //vLayout->addStretch(1);
+
+//            QList<rssArticle> rssList = rss.getArtList();
+
+//            for (int posi = 0; posi < rssList.size(); posi++)
+//            {
+//                MyToolButton *titleButton = new MyToolButton;
+//                titleButton->feedtitle = titleClicked;
+//                titleButton->pos = posi;
+//                titleButton->setAutoRaise(true);
+//                titleButton->setText(rssList[posi].title);
+
+//                vLayout->addWidget(titleButton);
+
+//                connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
+//            }
+
+//            if (toolBoxHasRepeatChild(titleClicked))//当点击的订阅在toolbox中存在的时候获取存在的index并设置当前index为index
+//            {
+//                int index = childItemIndexInToolBox(titleClicked);
+//                ui->toolBox->setCurrentIndex(index);
+//            }
+//            else
+//            {
+//                ui->toolBox->addItem(artBox, titleClicked);
+//                ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
+//            }
+//        }
+//        else if (parser.getFeedKind() == "atom")
+//        {
+//            Atom atom(path);
+
+//            QGroupBox *artBox = new QGroupBox;
+//            QVBoxLayout *vLayout = new QVBoxLayout(artBox);
+
+//            QList<atomArticle> atomList = atom.getArtList();
+
+//            for (int posi = 0; posi < atomList.size(); posi++)
+//            {
+//                MyToolButton *titleButton = new MyToolButton;
+//                titleButton->feedtitle = titleClicked;
+//                titleButton->pos = posi;
+//                titleButton->setAutoRaise(true);
+//                titleButton->setText(atomList[posi].title);
+
+//                vLayout->addWidget(titleButton);
+
+//                connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
+//            }
+
+//            if (toolBoxHasRepeatChild(titleClicked))
+//            {
+//                int index = childItemIndexInToolBox(titleClicked);
+//                ui->toolBox->setCurrentIndex(index);
+//            }
+//            else
+//            {
+//                ui->toolBox->addItem(artBox, titleClicked);
+//                ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
+//            }
+//        }
+
+//        feedfile.close();
+//    }
+//}
 
 /*判断新建的item是否已经存在在toolbox中*/
 bool MainWindow::toolBoxHasRepeatChild(QString title)//判断新建的item是否已经存在toolbox中
@@ -321,70 +320,34 @@ int MainWindow::childItemIndexInToolBox(QString title)
 /*在右边wenengineview中加载点击文章的内容*/
 void MainWindow::showArticleContent(QString title, int pos)
 {
-    if (!ui->treeWidget->currentItem()->parent())
-        return;
-    QString feedTitle = ui->toolBox->itemText(ui->toolBox->currentIndex());
+    QString feedTitle = title;
     int class_id = this->dbManager->getClassIdByFeedTitle(feedTitle);
-    QString fileName = this->dbManager->getFeedPath(class_id, feedTitle);
+    int feedId = this->dbManager->getFeedId(class_id, feedTitle);
 
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly))
+    QList<int> contentsList = this->dbManager->getContentId(feedId);//获取feedId对应的所有文章ID链表
+    QString contentName, contentUrl;
+    int contentId = contentsList[0] + pos;//获取点击文章的id
+    //qDebug() << contentId;
+    contentUrl = this->dbManager->getContentUrl(contentId);//获取点击文章的URL
+    contentName = this->dbManager->getContentName(contentId);//获取点击文章的标题
+
+    if (contentUrl == NULL)
     {
-        QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("打开文件失败!"));
+        QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("获取文章网址失败!"));
         warning.setButtonText(QMessageBox::Ok, tr("确定"));
         warning.setButtonText(QMessageBox::Cancel, tr("取消"));
         warning.setIcon(QMessageBox::Warning);
         warning.exec();
+        return;
     }
 
-    XmlParser parser(&file);
-    if(parser.getFeedKind() == "rss")
-    {
-        Rss rss(fileName);
+    QToolButton* btn = (QToolButton*)this->sender();
+    btn->setText("[已读] " + contentName);
 
-        QList<rssArticle> rssList = rss.getArtList();
-        //qDebug() << rssList[pos].description;//获取内容成功，但是还需要解析
-
-        if (rssList[pos].link == NULL)
-        {
-            //QMessageBox::warning(this, tr("警告"), tr("获取文章网址失败！"));
-            QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("获取文章网址失败!"));
-            warning.setButtonText(QMessageBox::Ok, tr("确定"));
-            warning.setButtonText(QMessageBox::Cancel, tr("取消"));
-            warning.setIcon(QMessageBox::Warning);
-            warning.exec();
-        }
-        else
-        {
-            QUrl articleUrl(rssList[pos].link); //让界面中的webview加载网页
-            ui->webView->load(articleUrl);
-            ui->tabWidget->setTabText(0, rssList[pos].title);
-        }
-    }
-    else if (parser.getFeedKind() == "atom")
-    {
-        Atom atom(fileName);
-
-        QList<atomArticle> atomList = atom.getArtList();
-        //qDebug() << atomList[pos].content;//获取内容成功，但是还需要解析
-
-        if (atomList[pos].link == NULL)
-        {
-            //QMessageBox::warning(this, tr("警告"), tr("获取文章网址失败！"));
-            QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("获取文章网址失败！"));
-            warning.setButtonText(QMessageBox::Ok, tr("确定"));
-            warning.setButtonText(QMessageBox::Cancel, tr("取消"));
-            warning.setIcon(QMessageBox::Warning);
-            warning.exec();
-        }
-        else
-        {
-            QUrl articleUrl(atomList[pos].link);//界面中的webview加载网页
-            ui->webView->load(articleUrl);
-            ui->tabWidget->setTabText(0, atomList[pos].title);
-        }
-    }
-
+    QUrl articleUrl(contentUrl); //让界面中的webview加载网页
+    ui->webView->load(articleUrl);
+    ui->tabWidget->setTabText(0, contentName);
+    this->dbManager->updateContentReadState(contentId);//将点击的文章标记为已读
 }
 
 /*初始化某些界面部件*/
@@ -791,6 +754,7 @@ void MainWindow::addSubcription()
     XmlParser parser(&file);
     QString title;
     QList<QString> articleNamesList;
+    QList<QString> articleUrlList;
     if (parser.getFeedKind() == "atom")
     {
         Atom atomFeed(filepath);
@@ -798,6 +762,7 @@ void MainWindow::addSubcription()
         for (int i = 0; i < atomArticleList.size(); i++)
         {
             articleNamesList.append(atomArticleList[i].title);
+            articleUrlList.append(atomArticleList[i].link);
         }
 
         QStringList textlist;
@@ -832,6 +797,7 @@ void MainWindow::addSubcription()
         for (int i = 0; i < rssArticleList.size(); i++)
         {
             articleNamesList.append(rssArticleList[i].title);
+            articleUrlList.append(rssArticleList[i].link);
         }
 
         QStringList textlist;
@@ -878,7 +844,7 @@ void MainWindow::addSubcription()
     for (int j = 0; j < articleNamesList.size(); j++)//插入contents
     {
         int content_id = this->dbManager->getVacantContentId();
-        this->dbManager->insertToContents(content_id, articleNamesList[j], 0, 0, 0);
+        this->dbManager->insertToContents(content_id, articleNamesList[j], articleUrlList[j], 0, 0, 0);
         this->dbManager->insertToFeed_Has_Contents(feed_id, content_id);
     }
 }
@@ -1127,6 +1093,19 @@ void MainWindow::on_deleteToolBox_triggered()
     if (index == -1)
         return;
 
+    QString feedName = ui->toolBox->itemText(index);
+
+    for (int i = 0; i < this->currentFeedIdList.size(); i++)
+    {
+        int id = currentFeedIdList[i];
+        QString nameTmp = this->dbManager->getFeedName(id);
+        if (nameTmp == feedName)
+        {
+            currentFeedIdList.removeAt(i);
+            break;
+        }
+    }
+
     if (ui->webView->url() != QUrl("http://sw.scu.edu.cn/"))
     {
         ui->webView->load(QUrl("http://sw.scu.edu.cn/"));
@@ -1341,4 +1320,67 @@ void MainWindow::updateDialogSlots(QString info)
 {
     this->wordsLabel->setText(info);
     updateDialog->show();
+}
+
+/*槽函数：标记所有文章已读*/
+void MainWindow::markAllReadContentsRead()
+{
+    if (currentFeedIdList.size() == 0)
+    {
+        QMessageBox warning(QMessageBox::Warning, tr("警告"), tr("您还没有选择想要标记的推送哦！"));
+        warning.setButtonText(QMessageBox::Ok, tr("确定"));
+        warning.setButtonText(QMessageBox::Cancel, tr("取消"));
+        warning.setIcon(QMessageBox::Warning);
+        warning.setWindowIcon(QIcon("://ico//image//warning_panda.png"));
+        warning.exec();
+        return;
+    }
+
+    QString feedName = ui->toolBox->itemText(ui->toolBox->currentIndex());
+    int feed_id;
+    int idtmp;
+    QString nametmp;
+    //qDebug() << feedName << endl;
+    for (int i = 0; i < currentFeedIdList.size(); i++)
+    {
+        idtmp = currentFeedIdList[i];
+        nametmp = this->dbManager->getFeedName(idtmp);
+        //qDebug() << idtmp << " " << nametmp << endl;
+        if (feedName == nametmp)
+        {
+            feed_id = idtmp;
+            break;
+        }
+    }
+
+    QList<int> contentIdList = this->dbManager->getContentId(feed_id);
+
+    for (int j = 1; j < contentIdList.size(); j++)
+    {
+        this->dbManager->updateContentReadState(contentIdList[j]);//更新数据库
+    }
+
+    ui->toolBox->currentWidget()->deleteLater();
+    QGroupBox *artBox = new QGroupBox;
+    QVBoxLayout *vLayout = new QVBoxLayout(artBox);
+    for (int i = 0; i < contentIdList.size(); i++)
+    {
+        QString title = this->dbManager->getContentName(contentIdList[i]);
+        int readornot = this->dbManager->getContentReadState(contentIdList[i]);
+        MyToolButton *titleButton = new MyToolButton;
+        titleButton->feedtitle = feedName;
+        titleButton->pos = i;
+        titleButton->setAutoRaise(true);
+        if (readornot == 0)
+            title = "[未读] " + title;
+        else if (readornot == 1)
+            title = "[已读] " + title;
+        titleButton->setText(title);
+
+        vLayout->addWidget(titleButton);
+
+        connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
+    }
+    ui->toolBox->addItem(artBox, feedName);
+    ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
 }

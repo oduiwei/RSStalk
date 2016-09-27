@@ -46,6 +46,7 @@ void UpdateThread::run()
     }
     //重新下载所有的订阅
     QList<QString> articleNamesList;
+    QList<QString> articleUrlList;
     for (int j = 0; j < feedNum; j++)
     {
         QUrl urlTmp(feedUrlList[j]);
@@ -85,6 +86,7 @@ void UpdateThread::run()
             for (int i = 0; i < atomArticleList.size(); i++)
             {
                 articleNamesList.append(atomArticleList[i].title);
+                articleUrlList.append(atomArticleList[i].link);
             }
         }
         else if (parser.getFeedKind() == "rss")
@@ -94,6 +96,7 @@ void UpdateThread::run()
             for (int i = 0; i < rssArticleList.size(); i++)
             {
                 articleNamesList.append(rssArticleList[i].title);
+                articleUrlList.append(rssArticleList[i].link);
             }
         }
     }
@@ -115,7 +118,7 @@ void UpdateThread::run()
         for (int j = 0; j < articleNamesList.size(); j++)//重新插入新的内容
         {
             int content_id = this->dbManager->getVacantContentId();
-            this->dbManager->insertToContents(content_id, articleNamesList[j], 0, 0, 0);
+            this->dbManager->insertToContents(content_id, articleNamesList[j], articleUrlList[j], 0, 0, 0);
             this->dbManager->insertToFeed_Has_Contents(feedIdTmp, content_id);
         }
     }

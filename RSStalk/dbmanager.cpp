@@ -98,15 +98,16 @@ void DBManager::insertToStorage(int id, int feed_id, QString path)
     }
 }
 
-void DBManager::insertToContents(int article_id, QString title, int deleted, int favorite, int failed)
+void DBManager::insertToContents(int article_id, QString title, QString url, int deleted, int favorite, int failed)
 {
     QSqlQuery query(db);
-    query.prepare("INSERT INTO contents VALUES(?, ?, ?, ?, ?)");
+    query.prepare("INSERT INTO contents VALUES(?, ?, ?, ?, ?, ?)");
     query.bindValue(0, article_id);
     query.bindValue(1, title);
-    query.bindValue(2, deleted);
-    query.bindValue(3, favorite);
-    query.bindValue(4, failed);
+    query.bindValue(2, url);
+    query.bindValue(3, deleted);
+    query.bindValue(4, favorite);
+    query.bindValue(5, failed);
 
     bool ok = query.exec();
     if (!ok)
@@ -627,6 +628,40 @@ QString DBManager::getFeedUrl(int feed_id)
     return url;
 }
 
+QString DBManager::getContentName(int content_id)
+{
+    QSqlQuery query(db);
+    QString title;
+
+    bool ok = query.exec(QString("SELECT title FROM contents where id=%1;").arg(content_id));
+
+    if (!ok)
+    {
+        QSqlError lastError = query.lastError();
+        qDebug() << lastError.driverText() << "\nfail in getContentName.";
+    }
+    if (query.next())
+        title = query.value(0).toString();
+    return title;
+}
+
+QString DBManager::getContentUrl(int content_id)
+{
+    QSqlQuery query(db);
+    QString url;
+
+    bool ok = query.exec(QString("SELECT url FROM contents where id=%1;").arg(content_id));
+
+    if (!ok)
+    {
+        QSqlError lastError = query.lastError();
+        qDebug() << lastError.driverText() << "\nfail in getContentName.";
+    }
+    if (query.next())
+        url = query.value(0).toString();
+    return url;
+}
+
 QString DBManager::getFeedPath(int feed_id)
 {
     QSqlQuery query(db);
@@ -719,7 +754,7 @@ QList<int> DBManager::getContentId(int feed_id)
 {
     QSqlQuery query(db);
     QList<int> content_id_list;
-    bool ok = query.exec(QString("select content_id from feed_own_content where feed_id = %1;").arg(feed_id));
+    bool ok = query.exec(QString("select content_id from feed_own_content where feed_id=%1;").arg(feed_id));
     if (!ok)
     {
         QSqlError lastError = query.lastError();
@@ -828,6 +863,38 @@ int DBManager::getDeleteFeedClass_Id(int feed_id)
     return class_id;
 }
 
+int DBManager::getContentIdByName(QString name)
+{
+    QSqlQuery query(db);
+    bool ok = query.exec(QString("SELECT id FROM contents where title = %1;").arg(name));
+    if (!ok)
+    {
+        QSqlError lastError = query.lastError();
+        qDebug() << lastError.driverText() << "\nfail in getContentIdByName.";
+    }
+    int content_id;
+    if (query.next())
+        content_id = query.value(0).toInt();
+    return content_id;
+}
+
+int DBManager::getContentReadState(int content_id)
+{
+    //qDebug() << content_id;
+    QSqlQuery query(db);
+    bool ok = query.exec(QString("SELECT readstate FROM contents where id = %1;").arg(content_id));
+    if (!ok)
+    {
+        QSqlError lastError = query.lastError();
+        qDebug() << lastError.driverText() << "\nfail in getContentReadState.";
+    }
+    int r;
+    if (query.next())
+        r = query.value(0).toInt();
+    //qDebug() << r;
+    return r;
+}
+
 QString DBManager::getDeleteFeedUrl(int feed_id)
 {
     QSqlQuery query(db);
@@ -895,6 +962,17 @@ void DBManager::updateFeedPath(int feed_id, QString path)
     if (!ok)
     {
         QSqlError lastError = query.lastError();
-        qDebug() << lastError.driverText() << "\nfail in renameFeedPath.";
+        qDebug() << lastError.driverText() << "\nfail in updateFeedPath.";
+    }
+}
+
+void DBManager::updateContentReadState(int content_id)
+{
+    QSqlQuery query(db);
+    bool ok = query.exec(QString("update contents set readstate = 1 where id = %1;").arg(content_id));
+    if (!ok)
+    {
+        QSqlError lastError = query.lastError();
+        qDebug() << lastError.driverText() << "\nfail in updateContentReadState.";
     }
 }

@@ -35,7 +35,7 @@ public:
     void insertToFolder_Store_Feed(int, int);
     void insertToSite_Donate_Feed(int, int);
     void insertToStorage_Store_Feed(int, int);
-    void insertToContents(int, QString, int, int, int);
+    void insertToContents(int, QString, QString, int, int, int);
     void insertToFeed_Has_Contents(int, int);
     void insertToDelete_Feed(int, QString, int, QString, QString, QString);
     void insertToBrowserHistory(int, QString, QString);
@@ -48,6 +48,7 @@ public:
     void renameClassName(int, QString);
     void renameFeedName(int, QString);
     void updateFeedPath(int, QString);
+    void updateContentReadState(int);//更新文章的已读状态
 
     int getTupleNumInSite();
     int getTupleNumInFeed();
@@ -65,6 +66,9 @@ public:
     int getVacantDeleteFeedId();
     int getVacantBrowserHistoryId();
     int getClassIdByFeedTitle(QString);
+    int getDeleteFeedClass_Id(int);
+    int getContentIdByName(QString);
+    int getContentReadState(int);//读取某个文章是否已读
 
     QList<int> getContentId(int);
     QList<int> getFeedIdList();
@@ -84,7 +88,8 @@ public:
     QString getFeedUrl(int);
     QString getFeedPath(int);
     QString getDeleteFeedTitle(int);
-    int getDeleteFeedClass_Id(int);
+    QString getContentName(int);
+    QString getContentUrl(int);
     QString getDeleteFeedUrl(int);
     QString getDeleteFeedPath(int);
     QString getDeleteFeedDate();

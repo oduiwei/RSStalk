@@ -73,10 +73,6 @@ public:
     void setWindowFont();//初始化所有部件的字体
     void initWindowIcon();
 
-    void showParseResultExample();//渲染RSS源示例
-
-    void downloadTest();//测试downloadManager
-
     void refreshFolderTreeWidget();
     void clearFolderTreeWidget();
 
@@ -148,6 +144,8 @@ private:
     QMessageBox *updateSuccessBox;
     QMessageBox *updateFailBox;
 
+    QList<int> currentFeedIdList;//toolbox中显示的feedid的链表
+
 private slots:
     void addFolderActionTriggered();
     void addFolderToTreeWidget();
@@ -166,6 +164,7 @@ private slots:
     void updateFailed(int);//更新失败槽函数
     void noFeedSlots();
     void updateDialogSlots(QString);
+    void markAllReadContentsRead();//标记所有文章已读
 
 public slots:
     void addSubcription();
