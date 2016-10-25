@@ -45,17 +45,19 @@ void UpdateThread::run()
         //qDebug() << feedIdTmp << " " << feedUrlTmp << " " << feedPathTmp;
     }
     //重新下载所有的订阅
-    QList<QString> articleNamesList;
-    QList<QString> articleUrlList;
+    QMap<int, QList<QString> > articleNamesList;
+    QMap<int, QList<QString> > articleUrlList;
+    //QList<QString> articleNamesList;
+    //QList<QString> articleUrlList;
     for (int j = 0; j < feedNum; j++)
     {
-        QUrl urlTmp(feedUrlList[j]);
+        //QUrl urlTmp(feedUrlList[j]);
         //qDebug() << feedUrlList[j];
-        emit showUpdateDialog(QString("正在更新第%1个订阅，共%2个订阅，请稍等...").arg(j+1).arg(feedNum));
+        emit showUpdateDialog(QString("正在更新第%1个订阅，共%2个订阅").arg(j+1).arg(feedNum));
         QTime t;
         t.start();
         QEventLoop loop;
-        Feed *newFeed = new Feed(urlTmp);
+        Feed *newFeed = new Feed(feedUrlList[j]);
         connect(newFeed, SIGNAL(feedDownloaded()), &loop, SLOT(quit()));
         if (t.elapsed() > 20000)
         {
@@ -79,26 +81,36 @@ void UpdateThread::run()
             return;
         }
         XmlParser parser(&file);
+        QList<QString> titleListTmp;
+        QList<QString> linkListTmp;
         if (parser.getFeedKind() == "atom")
         {
             Atom atomFeed(feedPathListUp[j]);
             QList<atomArticle> atomArticleList = atomFeed.getArtList();
+
             for (int i = 0; i < atomArticleList.size(); i++)
             {
-                articleNamesList.append(atomArticleList[i].title);
-                articleUrlList.append(atomArticleList[i].link);
+                titleListTmp.append(atomArticleList[i].title);
+                linkListTmp.append(atomArticleList[i].link);
+                //articleNamesList.append(atomArticleList[i].title);
+                //articleUrlList.append(atomArticleList[i].link);
             }
         }
         else if (parser.getFeedKind() == "rss")
         {
             Rss rssFeed(feedPathListUp[j]);
             QList<rssArticle> rssArticleList = rssFeed.getArtList();
+
             for (int i = 0; i < rssArticleList.size(); i++)
             {
-                articleNamesList.append(rssArticleList[i].title);
-                articleUrlList.append(rssArticleList[i].link);
+                titleListTmp.append(rssArticleList[i].title);
+                linkListTmp.append(rssArticleList[i].link);
+                //articleNamesList.append(rssArticleList[i].title);
+                //articleUrlList.append(rssArticleList[i].link);
             }
         }
+        articleNamesList.insert(feedIdList[j], titleListTmp);
+        articleUrlList.insert(feedIdList[j], linkListTmp);
     }
     emit alreadyUpdate();//发送更新完成信号
     //更新数据库
@@ -108,6 +120,8 @@ void UpdateThread::run()
         QFile::remove(feedPathOld);
     }
 
+    QList<QString> titleList;
+    QList<QString> urlList;
     for (int i = 0; i < feedNum; i++)
     {
         feedIdTmp = feedIdList.at(i);
@@ -115,10 +129,13 @@ void UpdateThread::run()
         this->dbManager->updateFeedPath(feedIdTmp, feedPathTmp);
         //qDebug() << feedIdTmp << " " << feedPathTmp;
         this->dbManager->deleteFeedContent(feedIdTmp);//删除feedIdTmp的所有文章内容
-        for (int j = 0; j < articleNamesList.size(); j++)//重新插入新的内容
+
+        titleList = articleNamesList.value(feedIdTmp);
+        urlList = articleUrlList.value(feedIdTmp);
+        for (int j = 0; j < titleList.size(); j++)//重新插入新的内容
         {
             int content_id = this->dbManager->getVacantContentId();
-            this->dbManager->insertToContents(content_id, articleNamesList[j], articleUrlList[j], 0, 0, 0);
+            this->dbManager->insertToContents(content_id, titleList[j], urlList[j], 0, 0, 0);
             this->dbManager->insertToFeed_Has_Contents(feedIdTmp, content_id);
         }
     }

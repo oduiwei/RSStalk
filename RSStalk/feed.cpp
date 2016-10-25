@@ -5,17 +5,30 @@
 #include <QEventLoop>
 
 
-/*初始化Feed类*/
+/*==============================================初始化Feed类======================================*/
 Feed::Feed()
 {
 
 }
 
-Feed::Feed(QUrl url)
+Feed::~Feed()
 {
-    DownloadManager *download = new DownloadManager;//必须要new一个，这样才能放到堆中，只有程序退出这些数据才会删除，防止
-    //后面的qnetworkaccessmanager finished信号不能触发
-    download->doDownload(url);
+    needAlter = false;
+}
+
+Feed::Feed(QString url)
+{
+    DownloadManager *download = new DownloadManager;//必须要new一个，这样才能放到堆中，只有程序退出
+    //这些数据才会删除，防止后面的qnetworkaccessmanager finished信号不能触发
+
+    //判断是否是html文件，如果是，需要将html转换成xml
+    QRegExp regForSchoolSubs("^http{0,1}://[\\w/.&?=]*(sw.scu.edu.cn)+[\\w/.&?=]*");
+    if (regForSchoolSubs.exactMatch(url))
+    {
+        this->needAlter = true;
+    }
+
+    download->doDownload((QUrl)url);//开始下载文件
     connect(download, SIGNAL(downloadFinishedSignal(QString)), this, SLOT(setFileAddr(QString)));
     connect(download,SIGNAL(downloadOverTime(QUrl)), this, SLOT(processDownloadOverTime(QUrl)));
 }
@@ -25,8 +38,14 @@ void Feed::setFileAddr(QString addr)
     QFileInfo info(addr);
     fileAddr = info.absoluteFilePath();
     alreadyDownload = true;
-    emit feedDownloaded();
-    //qDebug() << "already emit";
+
+    if (!needAlter)
+    {
+        emit feedDownloaded();
+        return;
+    }
+
+    //HTMLtoXMLParser *parser = new HTMLtoXMLParser(fileAddr);
 }
 
 QString Feed::getTitle()
@@ -66,7 +85,7 @@ void Feed::processDownloadOverTime(QUrl url)
 }
 
 
-/*初始化DownlaodManager类*/
+/*===============================初始化DownlaodManager类===============================================*/
 DownloadManager::DownloadManager()
 {
     //qDebug() << "enter 1";
@@ -179,8 +198,9 @@ void DownloadManager::rename()
     emit downloadFinishedSignal(newName);
 }
 
-QString DownloadManager::getFileAddr()//这里会面临一个问题，当文件还没下完时，获取的名字是空的
+QString DownloadManager::getFileAddr()
 {
+    //这里会面临一个问题，当文件还没下完时，获取的名字是空的
     return absoluteAddr;
 }
 
@@ -193,7 +213,7 @@ void DownloadManager::setFileAddrSlot(QString newName)
 
 
 
-/*初始化XmlParser类*/
+/*================================初始化XmlParser类==================================================*/
 XmlParser::XmlParser(QIODevice *device)
 {
     setDevice(device);
@@ -387,4 +407,133 @@ QString XmlParser::getFeedKind()
     return this->feedKind;
 }
 
+/*=============================初始化HtmlParser类======================================================*/
+//HtmlParser::HtmlParser(QString fileAddr)
+//{
+//    QFile file(fileAddr);
+//    if (!file.open(QIODevice::ReadOnly))
+//    {
+//        qDebug() << "open the downloaded html file failed";
+//        return;
+//    }
+
+//    this->dom = new QDomDocument;
+//    dom->setContent(&file);
+
+//    QDomElement root = dom->documentElement();
+//    QDomNode list = root.firstChild();
+//    QDomNode next = list.nextSibling();
+//    qDebug() << root.tagName();
+////    for (int i = 0; i < list.size(); i++)
+////    {
+////        QDomElement temp = list.item(i).toElement();
+////        qDebug() << temp.tagName() << endl;
+////    }
+//    //qDebug() << "enter HtlmParser's construction function.";
+////    setDevice(device);
+
+////    while (!atEnd())
+////    {
+////        readNext();
+////        qDebug() << name();
+////        if (isStartElement())
+////        {
+////            qDebug() << "access here.\n";
+////            if (name() == "html")//读取HTML标签
+////                read_table();
+////        }
+
+////        if (isEndElement())
+////            if (name() == "html")
+////                break;
+////    }
+//}
+
+//HtmlParser::~HtmlParser()
+//{
+
+//}
+
+//void HtmlParser::read_table()
+//{
+//    qDebug() << "enter read_table.";
+////    while (!atEnd())
+////    {
+////        readNext();
+////        if (isStartElement())
+////            if (name() == "table" && attributes().hasAttribute("id"))//找到id为__01的table标签
+////                if (attributes().value("id") == "__01")
+////                    read_td_header();
+////    }
+//}
+
+//void HtmlParser::read_td_header()
+//{
+//    qDebug() << "enter read_td_header.";
+////    while (!atEnd())
+////    {
+////        readNext();
+////        if (isStartElement())
+////            if (name() == "td" && (attributes().value("background") == "/sw/lib/images/sw02_3.jpg"))
+////                read_tr_header();
+////    }
+//}
+
+//void HtmlParser::read_tr_header()
+//{
+//    qDebug() << "enter read_tr_header.";
+////    while (!atEnd())
+////    {
+////        readNext();
+////        if (isStartElement())
+////            if (name() == "td" && (attributes().hasAttribute("width")))
+////                this->header = readElementText();
+
+////        if (isEndElement())
+////            if (name() == "td")
+////                break;
+////    }
+//}
+
+//QString HtmlParser::getHeader()
+//{
+//    return this->header;
+//}
+
+//QMap<QString, QString> HtmlParser::getArticles()
+//{
+//    return this->articles;
+//}
+
+/*=============================初始化HTMLtoXMLParser类=================================================*/
+//HTMLtoXMLParser::HTMLtoXMLParser(QString fileAddr)
+//{
+////    qDebug() << fileAddr;
+////    QFile file(fileAddr);
+////    if (!file.open(QIODevice::ReadOnly))
+////    {
+////        qDebug() << "open the downloaded html file failed";
+////        return;
+////    }
+
+//    HtmlParser *htmlp = new HtmlParser(fileAddr);
+//    //QString title = htmlp->getHeader();
+//    //qDebug() << title + "in HTMLtoXMLParser.";
+//}
+
+//HTMLtoXMLParser::~HTMLtoXMLParser()
+//{
+//}
+
+///*从HTML文件中读取标题*/
+//QString HTMLtoXMLParser::readHeader(QString fileAddr)
+//{
+//    return "a";
+//}
+
+///*从HTML文件中读取文章（包括文章标题和文章对应链接）*/
+////QMap<QString, QString> HTMLtoXMLParser::readArticle(QString fileAddr)
+////{
+
+////}
 

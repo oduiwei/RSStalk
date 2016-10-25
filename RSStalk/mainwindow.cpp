@@ -147,6 +147,7 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
         titleClicked = item->text(column);//获取当前点击的文章的标题
         int class_id = this->dbManager->getClassId(item->parent()->text(0));
         int feed_id = this->dbManager->getFeedId(class_id, titleClicked);
+        //qDebug() << feed_id;
         //QString path = this->dbManager->getFeedPath(class_id, titleClicked);
         //qDebug() << path << " in mainwindow";
         QList<int> contentIdList = this->dbManager->getContentId(feed_id);
@@ -185,86 +186,6 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
         }
     }
 }
-
-//        QFile feedfile(path);
-//        if (!feedfile.open(QIODevice::ReadOnly))
-//        {
-//            qDebug() << "open file failed";
-//        }
-
-//        XmlParser parser(&feedfile);           //用来判断点击的文章是属于rss还是atom
-
-//        if (parser.getFeedKind() == "rss")
-//        {
-//            Rss rss(path);
-
-//            QGroupBox *artBox = new QGroupBox;
-//            QVBoxLayout *vLayout = new QVBoxLayout(artBox);
-//            //vLayout->addStretch(1);
-
-//            QList<rssArticle> rssList = rss.getArtList();
-
-//            for (int posi = 0; posi < rssList.size(); posi++)
-//            {
-//                MyToolButton *titleButton = new MyToolButton;
-//                titleButton->feedtitle = titleClicked;
-//                titleButton->pos = posi;
-//                titleButton->setAutoRaise(true);
-//                titleButton->setText(rssList[posi].title);
-
-//                vLayout->addWidget(titleButton);
-
-//                connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
-//            }
-
-//            if (toolBoxHasRepeatChild(titleClicked))//当点击的订阅在toolbox中存在的时候获取存在的index并设置当前index为index
-//            {
-//                int index = childItemIndexInToolBox(titleClicked);
-//                ui->toolBox->setCurrentIndex(index);
-//            }
-//            else
-//            {
-//                ui->toolBox->addItem(artBox, titleClicked);
-//                ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
-//            }
-//        }
-//        else if (parser.getFeedKind() == "atom")
-//        {
-//            Atom atom(path);
-
-//            QGroupBox *artBox = new QGroupBox;
-//            QVBoxLayout *vLayout = new QVBoxLayout(artBox);
-
-//            QList<atomArticle> atomList = atom.getArtList();
-
-//            for (int posi = 0; posi < atomList.size(); posi++)
-//            {
-//                MyToolButton *titleButton = new MyToolButton;
-//                titleButton->feedtitle = titleClicked;
-//                titleButton->pos = posi;
-//                titleButton->setAutoRaise(true);
-//                titleButton->setText(atomList[posi].title);
-
-//                vLayout->addWidget(titleButton);
-
-//                connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
-//            }
-
-//            if (toolBoxHasRepeatChild(titleClicked))
-//            {
-//                int index = childItemIndexInToolBox(titleClicked);
-//                ui->toolBox->setCurrentIndex(index);
-//            }
-//            else
-//            {
-//                ui->toolBox->addItem(artBox, titleClicked);
-//                ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
-//            }
-//        }
-
-//        feedfile.close();
-//    }
-//}
 
 /*判断新建的item是否已经存在在toolbox中*/
 bool MainWindow::toolBoxHasRepeatChild(QString title)//判断新建的item是否已经存在toolbox中
@@ -646,15 +567,6 @@ void MainWindow::addFolderToTreeWidget()
 /*刷新folderwidget的内容*/
 void MainWindow::refreshFolderTreeWidget()
 {
-//    int count = folderTreeWidget->topLevelItemCount();
-//    if (count > 0)
-//    {
-//        for (int m = 0; m < count; m++)
-//        {
-//            folderTreeWidget->takeTopLevelItem(m);
-//        }
-//    }
-
     int i = ui->treeWidget->topLevelItemCount();
     for (int j = 0; j < i; j++)
     {
@@ -695,7 +607,7 @@ void MainWindow::addSubcription()
     if (this->urlLineEdit->text() == "http://" || this->folderTreeWidget->currentItem() == NULL)//输入不正确
         return;
 
-    QUrl urlAddr(urlLineEdit->text());
+    QString urlAddr(urlLineEdit->text());
     QTime t;
     t.start();
 
@@ -1118,8 +1030,11 @@ void MainWindow::on_deleteToolBox_triggered()
 /*槽函数：当用户输入订阅的网址后，判断是否输入正确网址*/
 void MainWindow::subsUrlEdited()
 {
-   QRegExp reg("^https{0,1}://[\\w/.&?=]*(atom|rss|feed|xml|Atom|Rss|Feed|Xml|ATOM|RSS|FEED|XML)+[\\w/.&?=]*");
-   QString url = urlLineEdit->text();
+   //QRegExp reg("^https{0,1}://[\\w/.&?=]*(atom|rss|feed|xml|Atom|Rss|Feed|Xml|ATOM|RSS|FEED|XML)+[\\w/.&?=]*");
+   QRegExp reg("^https{0,1}://[\\w/.&?=]*"
+               "((atom|rss|feed|xml|Atom|Rss|Feed|Xml|ATOM|RSS|FEED|XML)+"
+               "|(sw.scu.edu))[\\w/.&?=]*");
+    QString url = urlLineEdit->text();
 
    if (!reg.exactMatch(url))
    {
@@ -1355,7 +1270,7 @@ void MainWindow::markAllReadContentsRead()
 
     QList<int> contentIdList = this->dbManager->getContentId(feed_id);
 
-    for (int j = 1; j < contentIdList.size(); j++)
+    for (int j = 0; j < contentIdList.size(); j++)
     {
         this->dbManager->updateContentReadState(contentIdList[j]);//更新数据库
     }

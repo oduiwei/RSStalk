@@ -20,9 +20,15 @@
 #include <QXmlStreamAttributes>
 #include <QMessageBox>
 #include <QDir>
+#include <QXmlStreamWriter>
+#include <QDomDocument>
+#include <QDomElement>
 
 #define read 1 //标记是否为已读
 #define unread 0
+
+//class HTMLtoXMLParser;
+//class HtmlParser;
 
 /*feed类是rss, atom类的父类，主要负责通过DownloadManager来下载文件和保存文件信息*/
 class Feed : public QObject
@@ -30,7 +36,8 @@ class Feed : public QObject
     Q_OBJECT
 public:
     Feed();
-    Feed(QUrl url);
+    Feed(QString url);
+    ~Feed();
     QString getTitle();
     void setTitle(QString string);
 
@@ -39,6 +46,9 @@ public:
 
     bool getReadMark();
     void setReadMark(bool readOrNot);
+
+private:
+    bool needAlter = false;
 
 public:
     QString title;
@@ -127,5 +137,40 @@ public:
     QString getFeedTitle();
     QString getFeedKind();
 };
+
+/*学院新闻html文件解析类*/
+//class HtmlParser : public QObject
+//{
+//    Q_OBJECT
+//public:
+//    HtmlParser(QString addr);
+//    ~HtmlParser();
+
+//    QString getHeader();
+//    QMap<QString, QString> getArticles();
+
+//private:
+//    QString header;
+//    QMap<QString, QString> articles;
+//    QDomDocument * dom;
+
+//    void read_table();
+//    void read_td_header();
+//    void read_tr_header();
+//};
+
+/*学院新闻写入类*/
+//class HTMLtoXMLParser : public QObject, public QXmlStreamWriter
+//{
+//    Q_OBJECT
+//public:
+//    HTMLtoXMLParser(QString fileAddr);
+//    ~HTMLtoXMLParser();
+
+//private:
+//    QString readHeader(QString fileAddr);
+//    //QMap<QString, QString> readArticle(QString fileAddr);
+
+//};
 
 #endif // FEED_H

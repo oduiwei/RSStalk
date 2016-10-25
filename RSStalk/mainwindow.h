@@ -174,7 +174,6 @@ signals:
     void downloadFinish();
     void wrongUrl();
     void noChoice();
-
 };
 
 class MyToolButton : public QToolButton//自定义一个toolbutton，里面自己添加想要的方法和属性

@@ -42,8 +42,7 @@ FORMS    += mainwindow.ui \
     renamedialog.ui
 
 RESOURCES += \
-    img.qrc \
-    xmlfile.qrc
+    img.qrc
 
 RC_FILE +=  icon.rc
 
