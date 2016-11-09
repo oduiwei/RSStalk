@@ -21,25 +21,28 @@ SOURCES += main.cpp\
     feed.cpp \
     rss.cpp \
     atom.cpp \
-    feedlist.cpp \
-    folderlistmanager.cpp \
     mylineedit.cpp \
     dbmanager.cpp \
-    updatethread.cpp
+    updatethread.cpp \
+    filedownloader.cpp \
+    xmlinfodialog.cpp \
+    multidownloader.cpp
 
 HEADERS  += mainwindow.h \
     feed.h \
     rss.h \
     atom.h \
-    feedlist.h \
-    folderlistmanager.h \
     mylineedit.h \
     dbmanager.h \
-    updatethread.h
+    updatethread.h \
+    filedownloader.h \
+    xmlinfodialog.h \
+    multidownloader.h
 
 FORMS    += mainwindow.ui \
     addfolder.ui \
-    renamedialog.ui
+    renamedialog.ui \
+    xmlinfodialog.ui
 
 RESOURCES += \
     img.qrc

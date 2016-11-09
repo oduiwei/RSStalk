@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_MainWindow_t {
-    QByteArrayData data[25];
-    char stringdata0[474];
+    QByteArrayData data[26];
+    char stringdata0[503];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -52,8 +52,9 @@ QT_MOC_LITERAL(19, 373, 12), // "updateFailed"
 QT_MOC_LITERAL(20, 386, 11), // "noFeedSlots"
 QT_MOC_LITERAL(21, 398, 17), // "updateDialogSlots"
 QT_MOC_LITERAL(22, 416, 23), // "markAllReadContentsRead"
-QT_MOC_LITERAL(23, 440, 14), // "addSubcription"
-QT_MOC_LITERAL(24, 455, 18) // "showArticleContent"
+QT_MOC_LITERAL(23, 440, 28), // "slot_on_pullSchAds_triggered"
+QT_MOC_LITERAL(24, 469, 14), // "addSubcription"
+QT_MOC_LITERAL(25, 484, 18) // "showArticleContent"
 
     },
     "MainWindow\0downloadFinish\0\0wrongUrl\0"
@@ -68,8 +69,9 @@ QT_MOC_LITERAL(24, 455, 18) // "showArticleContent"
     "on_deleteToolBox_triggered\0subsUrlEdited\0"
     "showHasNotFinishedInfo\0updateFailed\0"
     "noFeedSlots\0updateDialogSlots\0"
-    "markAllReadContentsRead\0addSubcription\0"
-    "showArticleContent"
+    "markAllReadContentsRead\0"
+    "slot_on_pullSchAds_triggered\0"
+    "addSubcription\0showArticleContent"
 };
 #undef QT_MOC_LITERAL
 
@@ -79,7 +81,7 @@ static const uint qt_meta_data_MainWindow[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      22,   14, // methods
+      23,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -87,30 +89,31 @@ static const uint qt_meta_data_MainWindow[] = {
        3,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    0,  124,    2, 0x06 /* Public */,
-       3,    0,  125,    2, 0x06 /* Public */,
-       4,    0,  126,    2, 0x06 /* Public */,
+       1,    0,  129,    2, 0x06 /* Public */,
+       3,    0,  130,    2, 0x06 /* Public */,
+       4,    0,  131,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       5,    0,  127,    2, 0x08 /* Private */,
-       6,    0,  128,    2, 0x08 /* Private */,
-       7,    0,  129,    2, 0x08 /* Private */,
-       8,    0,  130,    2, 0x08 /* Private */,
-       9,    0,  131,    2, 0x08 /* Private */,
-      10,    0,  132,    2, 0x08 /* Private */,
-      11,    2,  133,    2, 0x08 /* Private */,
-      13,    1,  138,    2, 0x08 /* Private */,
-      14,    1,  141,    2, 0x08 /* Private */,
-      15,    0,  144,    2, 0x08 /* Private */,
-      16,    0,  145,    2, 0x08 /* Private */,
-      17,    0,  146,    2, 0x08 /* Private */,
-      18,    0,  147,    2, 0x08 /* Private */,
-      19,    1,  148,    2, 0x08 /* Private */,
-      20,    0,  151,    2, 0x08 /* Private */,
-      21,    1,  152,    2, 0x08 /* Private */,
-      22,    0,  155,    2, 0x08 /* Private */,
-      23,    0,  156,    2, 0x0a /* Public */,
-      24,    2,  157,    2, 0x0a /* Public */,
+       5,    0,  132,    2, 0x08 /* Private */,
+       6,    0,  133,    2, 0x08 /* Private */,
+       7,    0,  134,    2, 0x08 /* Private */,
+       8,    0,  135,    2, 0x08 /* Private */,
+       9,    0,  136,    2, 0x08 /* Private */,
+      10,    0,  137,    2, 0x08 /* Private */,
+      11,    2,  138,    2, 0x08 /* Private */,
+      13,    1,  143,    2, 0x08 /* Private */,
+      14,    1,  146,    2, 0x08 /* Private */,
+      15,    0,  149,    2, 0x08 /* Private */,
+      16,    0,  150,    2, 0x08 /* Private */,
+      17,    0,  151,    2, 0x08 /* Private */,
+      18,    0,  152,    2, 0x08 /* Private */,
+      19,    1,  153,    2, 0x08 /* Private */,
+      20,    0,  156,    2, 0x08 /* Private */,
+      21,    1,  157,    2, 0x08 /* Private */,
+      22,    0,  160,    2, 0x08 /* Private */,
+      23,    0,  161,    2, 0x08 /* Private */,
+      24,    0,  162,    2, 0x0a /* Public */,
+      25,    2,  163,    2, 0x0a /* Public */,
 
  // signals: parameters
     QMetaType::Void,
@@ -134,6 +137,7 @@ static const uint qt_meta_data_MainWindow[] = {
     QMetaType::Void, QMetaType::Int,    2,
     QMetaType::Void,
     QMetaType::Void, QMetaType::QString,    2,
+    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void, QMetaType::QString, QMetaType::Int,    2,    2,
@@ -167,8 +171,9 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 17: _t->noFeedSlots(); break;
         case 18: _t->updateDialogSlots((*reinterpret_cast< QString(*)>(_a[1]))); break;
         case 19: _t->markAllReadContentsRead(); break;
-        case 20: _t->addSubcription(); break;
-        case 21: _t->showArticleContent((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 20: _t->slot_on_pullSchAds_triggered(); break;
+        case 21: _t->addSubcription(); break;
+        case 22: _t->showArticleContent((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
@@ -223,13 +228,13 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 22)
+        if (_id < 23)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 22;
+        _id -= 23;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 22)
+        if (_id < 23)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 22;
+        _id -= 23;
     }
     return _id;
 }

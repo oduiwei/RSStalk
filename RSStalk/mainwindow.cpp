@@ -3,6 +3,9 @@
 #endif
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "multidownloader.h"
+//#define testfunction
+//#define PrintXML
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -54,6 +57,7 @@ MainWindow::MainWindow(QWidget *parent) :
     waitDialog->setWindowFlags(Qt::WindowCloseButtonHint);
 
     dbManager = new DBManager();//初始化数据库操控
+    infoDialog = new XMLInfoDialog;//创建一个XMLInfo对话框
 
     initGUI();
     initWindowIcon();
@@ -85,6 +89,10 @@ MainWindow::MainWindow(QWidget *parent) :
         updateThread->start();
     }
 
+#ifdef testfunction
+    this->testFunction();
+#endif
+
     /*槽函数的连接*/
     connect(ui->exitAction, SIGNAL(triggered(bool)), this, SLOT(close()));
     connect(ui->newFolderAction, SIGNAL(triggered()), this, SLOT(addFolderActionTriggered()));//新建分类触发
@@ -92,6 +100,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->deleteFolderAction, SIGNAL(triggered(bool)), this, SLOT(on_deleteAction_triggered()));
     connect(ui->deleteSubAction, SIGNAL(triggered(bool)), this, SLOT(on_deleteAction_triggered()));
     connect(ui->deleteToolBoxAction, SIGNAL(triggered(bool)), this, SLOT(on_deleteToolBox_triggered()));
+    connect(ui->pullSchAdsAction, SIGNAL(triggered(bool)), this, SLOT(slot_on_pullSchAds_triggered()));
     connect(ui->aheadToolBtn, SIGNAL(clicked(bool)), this, SLOT(lineEditUrlEntered()));//输入网址显示网页的两个槽函数
     connect(ui->webEditLine, SIGNAL(returnPressed()), this, SLOT(lineEditUrlEntered()));//当网页输入框输入完成时候
     //点击treewidget中的item后，显示文章列表
@@ -242,12 +251,14 @@ int MainWindow::childItemIndexInToolBox(QString title)
 void MainWindow::showArticleContent(QString title, int pos)
 {
     QString feedTitle = title;
+    //qDebug() << feedTitle;
     int class_id = this->dbManager->getClassIdByFeedTitle(feedTitle);
     int feedId = this->dbManager->getFeedId(class_id, feedTitle);
+    //qDebug() << feedId;
 
     QList<int> contentsList = this->dbManager->getContentId(feedId);//获取feedId对应的所有文章ID链表
     QString contentName, contentUrl;
-    int contentId = contentsList[0] + pos;//获取点击文章的id
+    int contentId = contentsList[pos];//获取点击文章的id
     //qDebug() << contentId;
     contentUrl = this->dbManager->getContentUrl(contentId);//获取点击文章的URL
     contentName = this->dbManager->getContentName(contentId);//获取点击文章的标题
@@ -267,6 +278,7 @@ void MainWindow::showArticleContent(QString title, int pos)
 
     QUrl articleUrl(contentUrl); //让界面中的webview加载网页
     ui->webView->load(articleUrl);
+
     ui->tabWidget->setTabText(0, contentName);
     this->dbManager->updateContentReadState(contentId);//将点击的文章标记为已读
 }
@@ -552,7 +564,7 @@ void MainWindow::addFolderToTreeWidget()
         QFont font("宋体", 12);
         folderItem->setText(0, foldername);
         folderItem->setFont(0, font);
-        folderItem->setIcon(0, QIcon("://ico//image//RSS1 (1).png"));
+        folderItem->setIcon(0, QIcon("://ico//image//RSS1 (2).png"));
         ui->treeWidget->addTopLevelItem(folderItem);
 
         if (wizard->isEnabled())//在这里一定要保证wizard已经初始化，所以一定要在构造函数里面就初始化wizard不能在后面函数初始化
@@ -809,6 +821,7 @@ void MainWindow::lineEditUrlEntered()
     }
 
     ui->webView->load(url);
+    //ui->webView->findText(QString("软件"));
     ui->tabWidget->setTabText(0, tr("浏览网页"));
 
     //更新数据库
@@ -1298,4 +1311,161 @@ void MainWindow::markAllReadContentsRead()
     }
     ui->toolBox->addItem(artBox, feedName);
     ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
+}
+
+void MainWindow::slot_on_pullSchAds_triggered()
+{
+    FileDownloader *downloader = new FileDownloader;
+    QTime t;
+    t.start();
+    QEventLoop loop;
+    downloader->doDownload(QUrl(INFOFILEPATH));
+    connect(downloader, SIGNAL(downloadSuccess()), &loop, SLOT(quit()));
+    loop.exec();
+
+    QString path = downloader->getFileAddr();
+
+    InfoXMLParser *parser = new InfoXMLParser(path);
+    QList<Univ_Info> univList = parser->getUnivInfoList();//获取学校列表
+    parser->deleteCurrentXML();//获取内容后删除下载的XML文件
+
+    infoDialog->setContent(univList);
+    infoDialog->exec();
+
+    //当infoDialog关闭时，获取选择的订阅及分类列表
+    QList<QList<int>> list = infoDialog->getSelectedTuple();
+    QList<int> feedIdList;//保存更新到数据库的feed的id
+//    for (int i = 0; i < list.size(); i++)
+//        qDebug() << list.at(i).at(0) << "-" << list.at(i).at(1) << "-" << list.at(i).at(2);
+    for (int i = 0; i < list.size(); i++)
+    {
+        int univId = list.at(i).at(0);//第i条记录里的univ id
+        int collId = list.at(i).at(1);//第i条记录里的college id
+        int feedId = list.at(i).at(2);//第i条记录里的feed id
+
+        Univ_Info univ_tmp = univList.at(univId);
+        College_Info coll_tmp = univ_tmp.getCollegeInfoList().at(collId);
+        Feed_Info feed_tmp = coll_tmp.getFeedInfoList().at(feedId);
+        //第i条记录的univ name
+        QString univName = univ_tmp.getName();
+        //第i条记录里的college name
+        QString collName = coll_tmp.getName();
+        //第i条记录里的feed name
+        QString feedName = feed_tmp.getName();
+        //第i条记录里的feed link
+        QString feedLink = feed_tmp.getLink();
+        //qDebug() << univName << " " << collName << " " << feedName << " " << feedLink;
+        /***********************添加folder***************************************/
+        QTreeWidgetItem* topItemTmp = NULL;
+        QString newName = univName + "/" + collName;
+        if (!treeWidgetHasRepeatChild(ui->treeWidget, newName))
+        {
+            //如果当前univName和college的拼接名字不存在treeWidget中就添加一个新的toplevelitem
+            topItemTmp = new QTreeWidgetItem(ui->treeWidget);
+            //更新数据库
+            int class_id = this->dbManager->getVacantClassId();
+            dbManager->insertToFolder(class_id, newName);
+        }
+        else
+            topItemTmp = getTopTreeWidgetItem(ui->treeWidget, newName);
+
+        QFont font("宋体", 12);
+        topItemTmp->setText(0, newName);
+        topItemTmp->setFont(0, font);
+        topItemTmp->setIcon(0, QIcon("://ico//image//RSS1 (2).png"));
+        /**************************先更新数据库再更新界面********************************/
+        //更新部分更新数据库
+        QString lastBuildTime = this->dbManager->getDeleteFeedDate();
+        int feed_id = this->dbManager->getVacantFeedId();
+        int class_id = this->dbManager->getClassId(newName);
+        this->dbManager->insertToFeed(feed_id, class_id, feedName, "new", lastBuildTime);//插入feed
+
+        feedIdList << feed_id;
+
+        int site_id = this->dbManager->getVacantSiteId();
+        this->dbManager->insertToSite(feed_id, feedLink);//插入site
+        this->dbManager->insertToSite_Donate_Feed(site_id, feed_id);//插入site_donate_feed
+        /**************************添加treewidgetitem************************************/
+        QTreeWidgetItem* secItemTmp = NULL;
+        if (!treeWidgetItemHasRepeatChild(topItemTmp, feedName))
+        {
+            //如果当前feedName不存在此toplevelitem中，就添加一个新的treewidgetitem
+            secItemTmp = new QTreeWidgetItem(topItemTmp);
+        }
+        else
+            secItemTmp = getTreeWidgetItem(topItemTmp, feedName);
+
+        secItemTmp->setText(0, feedName);
+        secItemTmp->setFont(0, font);
+        secItemTmp->setIcon(0, QIcon("://ico//image//RSStalk.png"));
+    }
+
+    //加载一个批量下载线程，下载所有选中订阅，但是注意要传入当前订阅的feed_id，然后在更新线程中更新后续的数据
+    MultiDownloader* d = new MultiDownloader;
+    d->setDownloadList(feedIdList);
+    connect(d, SIGNAL(showUpdateDialog(QString)), this, SLOT(updateDialogSlots(QString)));
+    connect(d, SIGNAL(alreadyUpdate()), updateDialog, SLOT(close()));
+    d->start();
+
+    //测试打印XML内容
+#ifdef PrintXML
+    for (int i = 0; i < univList.size(); i++)
+    {
+        Univ_Info tmp = univList.at(i);
+        qDebug() << tmp.getName();
+        QList<College_Info> tmp2 = tmp.getCollegeInfoList();
+        //qDebug() << tmp2.size();
+        for (int j = 0; j < tmp2.size(); j++)
+        {
+            College_Info tmp3 = tmp2.at(j);
+            qDebug() << "  -->" + tmp3.getName();
+            QList<Feed_Info> temp4 = tmp3.getFeedInfoList();
+            for (int m = 0; m < temp4.size(); m++)
+            {
+                Feed_Info temp5 =temp4.at(m);
+                qDebug() << "    -->" + temp5.getDescription();
+            }
+        }
+    }
+#endif
+}
+
+/*获得指定treewidget中指定名字的treewidgetitem*/
+QTreeWidgetItem* MainWindow::getTopTreeWidgetItem(QTreeWidget *parent, QString name)
+{
+    int count = parent->topLevelItemCount();
+    for (int i = 0; i < count; i++)
+    {
+        if (parent->topLevelItem(i)->text(0) == name)
+            return parent->topLevelItem(i);
+    }
+    return NULL;
+}
+
+/*获得指定treewidgetitem中指定名字的treewidgetitem*/
+QTreeWidgetItem* MainWindow::getTreeWidgetItem(QTreeWidgetItem *parent, QString name)
+{
+    int count = parent->childCount();
+    for (int i = 0; i < count; i++)
+    {
+        if (parent->child(i)->text(0) == name)
+            return parent->child(i);
+    }
+    return NULL;
+}
+
+/*判断指定treewidgetitem是否含有指定名字的子item*/
+bool MainWindow::treeWidgetItemHasRepeatChild(QTreeWidgetItem *parent, QString name)
+{
+    int count = parent->childCount();
+    for (int i = 0; i < count; i++)
+    {
+        if (parent->child(i)->text(0) == name)
+            return true;
+    }
+    return false;
+}
+
+void MainWindow::testFunction()
+{
 }

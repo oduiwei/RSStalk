@@ -145,7 +145,7 @@ void DownloadManager::downloadFinished(QNetworkReply *reply)
     //qDebug() << "enter 4";
     if (reply->error())
     {
-        qDebug() << "download error.";
+        qDebug() << "download error in downloadFinished of DownloadManager.";
         //QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("下载失败！请检查输入网址是否正确！"));
         return;//下载出现错误
     }

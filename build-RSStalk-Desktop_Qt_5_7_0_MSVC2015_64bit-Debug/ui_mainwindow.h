@@ -53,6 +53,7 @@ public:
     QAction *deleteSubAction;
     QAction *deleteToolBoxAction;
     QAction *renameAction;
+    QAction *pullSchAdsAction;
     QWidget *centralWidget;
     QHBoxLayout *horizontalLayout_3;
     QSplitter *splitter;
@@ -185,6 +186,8 @@ public:
         deleteToolBoxAction->setIcon(icon16);
         renameAction = new QAction(MainWindow);
         renameAction->setObjectName(QStringLiteral("renameAction"));
+        pullSchAdsAction = new QAction(MainWindow);
+        pullSchAdsAction->setObjectName(QStringLiteral("pullSchAdsAction"));
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -325,7 +328,7 @@ public:
         toolBox->setContextMenuPolicy(Qt::CustomContextMenu);
         page1 = new QWidget();
         page1->setObjectName(QStringLiteral("page1"));
-        page1->setGeometry(QRect(0, 0, 260, 692));
+        page1->setGeometry(QRect(0, 0, 235, 693));
         toolBox->addItem(page1, QStringLiteral(""));
 
         verticalLayout->addWidget(toolBox);
@@ -418,7 +421,7 @@ public:
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 1215, 26));
+        menuBar->setGeometry(QRect(0, 0, 1215, 25));
         file_menu = new QMenu(menuBar);
         file_menu->setObjectName(QStringLiteral("file_menu"));
         importOrExport_2 = new QMenu(file_menu);
@@ -450,6 +453,7 @@ public:
         file_menu->addAction(deleteSubAction);
         file_menu->addAction(deleteToolBoxAction);
         file_menu->addSeparator();
+        file_menu->addAction(pullSchAdsAction);
         file_menu->addAction(importOrExport_2->menuAction());
         file_menu->addSeparator();
         file_menu->addAction(manageCacheAction);
@@ -502,6 +506,7 @@ public:
         deleteToolBoxAction->setText(QApplication::translate("MainWindow", "\345\210\240\351\231\244\346\226\207\347\253\240\345\210\227\350\241\250", 0));
         renameAction->setText(QApplication::translate("MainWindow", "\351\207\215\345\221\275\345\220\215", 0));
         renameAction->setShortcut(QApplication::translate("MainWindow", "Ctrl+M", 0));
+        pullSchAdsAction->setText(QApplication::translate("MainWindow", "\346\213\211\345\217\226\346\226\260\351\227\273", 0));
         QTreeWidgetItem *___qtreewidgetitem = treeWidget->headerItem();
         ___qtreewidgetitem->setText(0, QApplication::translate("MainWindow", "\350\256\242\351\230\205\345\206\205\345\256\271", 0));
         IRCToolBtn->setText(QApplication::translate("MainWindow", "\350\275\254\345\210\260IRC", 0));

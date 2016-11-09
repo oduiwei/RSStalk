@@ -226,8 +226,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>260</width>
-             <height>692</height>
+             <width>235</width>
+             <height>693</height>
             </rect>
            </property>
            <attribute name="label">
@@ -369,7 +369,7 @@
      <x>0</x>
      <y>0</y>
      <width>1215</width>
-     <height>26</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="file_menu">
@@ -389,6 +389,7 @@
     <addaction name="deleteSubAction"/>
     <addaction name="deleteToolBoxAction"/>
     <addaction name="separator"/>
+    <addaction name="pullSchAdsAction"/>
     <addaction name="importOrExport_2"/>
     <addaction name="separator"/>
     <addaction name="manageCacheAction"/>
@@ -609,6 +610,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+M</string>
+   </property>
+  </action>
+  <action name="pullSchAdsAction">
+   <property name="text">
+    <string>拉取新闻</string>
    </property>
   </action>
  </widget>

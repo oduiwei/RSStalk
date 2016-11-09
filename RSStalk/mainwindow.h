@@ -39,15 +39,21 @@
 #include <QRegExp>
 #include <QKeyEvent>
 #include <QCloseEvent>
+#include <QWebEnginePage>
 #include <QDir>
 #include "ui_addfolder.h"
+#include "ui_renamedialog.h"
 #include "feed.h"
 #include "rss.h"
 #include "atom.h"
 #include "dbmanager.h"
-#include "ui_renamedialog.h"
 #include "updatethread.h"
+#include "filedownloader.h"
+#include "xmlinfodialog.h"
+#include "multidownloader.h"
 
+#define INFOFILEPATH "http://www.scjzz.com.cn/rsstalk/group/info.xml"
+//#define INFOFILEPATH "http://www.scjzz.com.cn/rsstalk/group/scuniv/chemistry/02.xml"
 namespace Ui {
 class MainWindow;
 }
@@ -78,12 +84,15 @@ public:
 
     bool toolBoxHasRepeatChild(QString);
     bool treeWidgetHasRepeatChild(QTreeWidget*, QString);
+    bool treeWidgetItemHasRepeatChild(QTreeWidgetItem*, QString);
     bool treeWidgetFolderHasRepeatChild(int, QString);
     int childItemIndexInToolBox(QString);
 
     int getCurrentToplevelItemIndex(QString);
 
     void showDefaultFromDB();//界面中显示数据库中存在的数据
+    QTreeWidgetItem* getTreeWidgetItem(QTreeWidgetItem*, QString);
+    QTreeWidgetItem* getTopTreeWidgetItem(QTreeWidget*, QString);
 
 private:
     Ui::MainWindow *ui;
@@ -92,6 +101,7 @@ private:
 
     DBManager *dbManager;
     QDialog *renameDialog;
+    XMLInfoDialog *infoDialog;
 
     QMenu *treeWidgetBlankMenu;
     QMenu *treeWidgetMenu;
@@ -146,6 +156,8 @@ private:
 
     QList<int> currentFeedIdList;//toolbox中显示的feedid的链表
 
+    void testFunction();
+
 private slots:
     void addFolderActionTriggered();
     void addFolderToTreeWidget();
@@ -165,6 +177,7 @@ private slots:
     void noFeedSlots();
     void updateDialogSlots(QString);
     void markAllReadContentsRead();//标记所有文章已读
+    void slot_on_pullSchAds_triggered();
 
 public slots:
     void addSubcription();
