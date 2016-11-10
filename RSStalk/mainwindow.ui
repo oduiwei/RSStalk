@@ -80,7 +80,7 @@
             <property name="font">
              <font>
               <family>宋体</family>
-              <pointsize>10</pointsize>
+              <pointsize>8</pointsize>
               <weight>50</weight>
               <italic>false</italic>
               <bold>false</bold>
@@ -88,7 +88,7 @@
              </font>
             </property>
             <property name="text">
-             <string>转到IRC</string>
+             <string>打开聊天窗口</string>
             </property>
            </widget>
           </item>

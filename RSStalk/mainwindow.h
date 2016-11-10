@@ -42,12 +42,13 @@
 #include <QWebEnginePage>
 #include <QDir>
 #include "ui_addfolder.h"
-#include "ui_renamedialog.h"
 #include "feed.h"
 #include "rss.h"
 #include "atom.h"
 #include "dbmanager.h"
+#include "ui_renamedialog.h"
 #include "updatethread.h"
+#include "irc_window.h"
 #include "filedownloader.h"
 #include "xmlinfodialog.h"
 #include "multidownloader.h"
@@ -95,6 +96,7 @@ public:
     QTreeWidgetItem* getTopTreeWidgetItem(QTreeWidget*, QString);
 
 private:
+    Irc_window*irc;
     Ui::MainWindow *ui;
     Ui::AddFolderDialog folderUi;
     Ui::renameDialog renameUi;
@@ -177,8 +179,8 @@ private slots:
     void noFeedSlots();
     void updateDialogSlots(QString);
     void markAllReadContentsRead();//标记所有文章已读
-    void slot_on_pullSchAds_triggered();
-
+    void showIrcWindow();//irc显示窗口
+	void slot_on_pullSchAds_triggered();
 public slots:
     void addSubcription();
     void showArticleContent(QString, int);
@@ -187,6 +189,7 @@ signals:
     void downloadFinish();
     void wrongUrl();
     void noChoice();
+
 };
 
 class MyToolButton : public QToolButton//自定义一个toolbutton，里面自己添加想要的方法和属性

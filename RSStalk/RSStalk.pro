@@ -24,6 +24,16 @@ SOURCES += main.cpp\
     mylineedit.cpp \
     dbmanager.cpp \
     updatethread.cpp \
+    form.cpp \
+    irc_window.cpp \
+    create_channel.cpp \
+    find_channel.cpp \
+    emoji.cpp \
+    channel.cpp \
+    user.cpp \
+    channel_user.cpp \
+    feedback.cpp \
+    join_channel.cpp \
     filedownloader.cpp \
     xmlinfodialog.cpp \
     multidownloader.cpp
@@ -35,13 +45,30 @@ HEADERS  += mainwindow.h \
     mylineedit.h \
     dbmanager.h \
     updatethread.h \
-    filedownloader.h \
+    form.h \
+    irc_window.h \
+    create_channel.h \
+    find_channel.h \
+    emoji.h \
+    channel.h \
+    user.h \
+    channel_user.h \
+    feedback.h \
+    join_channel.h \
+     filedownloader.h \
     xmlinfodialog.h \
     multidownloader.h
 
 FORMS    += mainwindow.ui \
     addfolder.ui \
     renamedialog.ui \
+    form.ui \
+    irc_window.ui \
+    create_channel.ui \
+    find_channel.ui \
+    emoji.ui \
+    feedback.ui \
+    join_channel.ui \
     xmlinfodialog.ui
 
 RESOURCES += \
