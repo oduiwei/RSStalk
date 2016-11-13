@@ -366,3 +366,244 @@ void Univ_Info::setCollegeInfoList(QList<College_Info> list)
     for (int i = 0; i < list.size(); i++)
         this->collegeInfoList.append(list.at(i));
 }
+
+/****************************************Activity_Info类部分********************************************/
+Activity_Info::Activity_Info(QString title, QString time, QString address,
+                             QString content, QString name, QString stunum,
+                             QString tel, QString schname, QString colname)
+{
+    this->title = title;
+    this->time = time;
+    this->address = address;
+    this->content = content;
+    this->name = name;
+    this->stunum = stunum;
+    this->tel = tel;
+    this->schname = schname;
+    this->colname = colname;
+}
+
+QString Activity_Info::getTitle()
+{
+    return this->title;
+}
+
+QString Activity_Info::getTime()
+{
+    return this->time;
+}
+
+QString Activity_Info::getAddress()
+{
+    return this->address;
+}
+
+QString Activity_Info::getContent()
+{
+    return this->content;
+}
+
+QString Activity_Info::getName()
+{
+    return this->name;
+}
+
+QString Activity_Info::getStunum()
+{
+    return this->stunum;
+}
+
+QString Activity_Info::getTel()
+{
+    return this->tel;
+}
+
+QString Activity_Info::getSchname()
+{
+    return this->schname;
+}
+
+QString Activity_Info::getColname()
+{
+    return this->colname;
+}
+
+void Activity_Info::setTitle(QString title)
+{
+    this->title = title;
+}
+
+void Activity_Info::setTime(QString time)
+{
+    this->time = time;
+}
+
+void Activity_Info::setAddress(QString address)
+{
+    this->address = address;
+}
+
+void Activity_Info::setContent(QString content)
+{
+    this->content = content;
+}
+
+void Activity_Info::setName(QString name)
+{
+    this->name = name;
+}
+
+void Activity_Info::setStunum(QString stunum)
+{
+    this->stunum = stunum;
+}
+
+void Activity_Info::setTel(QString tel)
+{
+    this->tel = tel;
+}
+
+void Activity_Info::setSchname(QString schname)
+{
+    this->schname = schname;
+}
+
+void Activity_Info::setColname(QString colname)
+{
+    this->colname = colname;
+}
+
+/*********************************ActivityXmlParser类部分************************************/
+ActivityXmlParser::ActivityXmlParser(QString path)
+{
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly))
+    {
+        qDebug() << "Open file failed in InfoXMLParser.";
+        return;
+    }
+    this->currentPath = path;
+
+    setDevice(&file);
+
+    while(!atEnd())
+    {
+        readNext();
+
+        if (isStartElement())
+        {
+            if (name() == "rsstalk")
+            {
+                this->readXMLDocuemnt();
+            }
+        }//这里不需要判断结束标签，需要读取全文内容
+    }
+}
+
+void ActivityXmlParser::readXMLDocuemnt()
+{
+    while (!atEnd())
+    {
+        readNext();
+        if (isStartElement())
+        {
+            if (name() == "activity")
+            {
+                Activity_Info actiInfo;
+                this->readActivityInfo(&actiInfo);
+                //将读取的Activity_Info类加入到列表中
+                this->actiInfoList.append(actiInfo);
+            }
+        }
+
+        //当读取到rsstalk结束标签时（即文件结尾），结束循环
+        if (isEndElement())
+        {
+            if (name() == "rsstalk")
+                break;
+        }
+    }
+}
+
+void ActivityXmlParser::readActivityInfo(Activity_Info *actiInfo)
+{
+    while (!atEnd())
+    {
+        readNext();
+
+        if (isStartElement())
+        {
+            if (name() == "title")
+            {
+                QString title = readElementText();
+                actiInfo->setTitle(title);
+                continue;
+            }
+            else if (name() == "time")
+            {
+                QString time = readElementText();
+                actiInfo->setTime(time);
+                continue;
+            }
+            else if (name() == "address")
+            {
+                QString address = readElementText();
+                actiInfo->setAddress(address);
+                continue;
+            }
+            else if (name() == "content")
+            {
+                QString content = readElementText();
+                actiInfo->setContent(content);
+                continue;
+            }
+            else if (name() == "name")
+            {
+                QString name = readElementText();
+                actiInfo->setName(name);
+                continue;
+            }
+            else if (name() == "stunum")
+            {
+                QString stunum = readElementText();
+                actiInfo->setStunum(stunum);
+                continue;
+            }
+            else if (name() == "tel")
+            {
+                QString tel = readElementText();
+                actiInfo->setTel(tel);
+                continue;
+            }
+            else if (name() == "schname")
+            {
+                QString schname = readElementText();
+                actiInfo->setSchname(schname);
+                continue;
+            }
+            else if (name() == "colname")
+            {
+                QString colname = readElementText();
+                actiInfo->setColname(colname);
+                continue;
+            }
+        }
+
+        //当读到activity结束标签，此次读取activity信息结束
+        if (isEndElement())
+        {
+            if (name() == "activity")
+                break;
+        }
+    }
+}
+
+QList<Activity_Info> ActivityXmlParser::getActivityInfoList()
+{
+    return this->actiInfoList;
+}
+
+void ActivityXmlParser::deleteCurrentXML()
+{
+    QFile::remove(this->currentPath);
+}

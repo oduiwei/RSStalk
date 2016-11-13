@@ -191,7 +191,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit">
+           <widget class="QLineEdit" name="seachLineEdit">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -390,6 +390,7 @@
     <addaction name="deleteToolBoxAction"/>
     <addaction name="separator"/>
     <addaction name="pullSchAdsAction"/>
+    <addaction name="activityAction"/>
     <addaction name="importOrExport_2"/>
     <addaction name="separator"/>
     <addaction name="manageCacheAction"/>
@@ -615,6 +616,16 @@
   <action name="pullSchAdsAction">
    <property name="text">
     <string>拉取新闻</string>
+   </property>
+  </action>
+  <action name="activityAction">
+   <property name="text">
+    <string>学校活动</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>微软雅黑</family>
+    </font>
    </property>
   </action>
  </widget>

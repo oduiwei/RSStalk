@@ -13,9 +13,11 @@
 #include <QXmlStreamAttributes>
 
 class InfoXMLParser;
+class ActivityXmlParser;
 class Feed_Info;
 class College_Info;
 class Univ_Info;
+class Activity_Info;
 
 /*服务器中info.xml的下载器*/
 class FileDownloader : public QObject
@@ -63,6 +65,24 @@ private:
     void readUnivInfo(Univ_Info *univInfo);
     void readCollegeInfo(College_Info *collegeInfo);
     void readFeedInfo(Feed_Info *feedInfo);
+};
+
+/*服务器的activity.xml的解析器，可以获取一个Activity_Info的链表*/
+class ActivityXmlParser : public QObject, public QXmlStreamReader
+{
+    Q_OBJECT
+public:
+    ActivityXmlParser(QString path);
+
+    QList<Activity_Info> getActivityInfoList();
+    void deleteCurrentXML();
+
+private:
+    QString currentPath;
+    QList<Activity_Info> actiInfoList;
+
+    void readXMLDocuemnt();
+    void readActivityInfo(Activity_Info *actiInfo);
 };
 
 /*info.xml中的Feed标签类*/
@@ -117,6 +137,45 @@ public:
 private:
     QString name;
     QList<College_Info> collegeInfoList;
+};
+
+/*activity.xml中的activity标签类*/
+class Activity_Info
+{
+private:
+    QString title;
+    QString time;
+    QString address;
+    QString content;
+    QString name;
+    QString stunum;
+    QString tel;
+    QString schname;
+    QString colname;
+
+public:
+    Activity_Info(QString, QString, QString, QString, QString, QString, QString, QString, QString);
+    Activity_Info() {}
+
+    QString getTitle();
+    QString getTime();
+    QString getAddress();
+    QString getContent();
+    QString getName();
+    QString getStunum();
+    QString getTel();
+    QString getSchname();
+    QString getColname();
+
+    void setTitle(QString title);
+    void setTime(QString time);
+    void setAddress(QString address);
+    void setContent(QString content);
+    void setName(QString name);
+    void setStunum(QString stunum);
+    void setTel(QString tel);
+    void setSchname(QString schname);
+    void setColname(QString colname);
 };
 
 #endif // FILEDOWNLOADER_H

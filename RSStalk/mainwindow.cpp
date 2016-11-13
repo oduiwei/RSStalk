@@ -4,8 +4,11 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "multidownloader.h"
+#include "activitydialog.h"
+#include "searchtexttool.h"
 //#define testfunction
 //#define PrintXML
+//#define DEBUG_ACTIVITY
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -104,6 +107,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->deleteSubAction, SIGNAL(triggered(bool)), this, SLOT(on_deleteAction_triggered()));
     connect(ui->deleteToolBoxAction, SIGNAL(triggered(bool)), this, SLOT(on_deleteToolBox_triggered()));
     connect(ui->pullSchAdsAction, SIGNAL(triggered(bool)), this, SLOT(slot_on_pullSchAds_triggered()));
+    connect(ui->activityAction, SIGNAL(triggered(bool)), this, SLOT(slot_on_getActiInfo_triggered()));
     connect(ui->aheadToolBtn, SIGNAL(clicked(bool)), this, SLOT(lineEditUrlEntered()));//输入网址显示网页的两个槽函数
     connect(ui->webEditLine, SIGNAL(returnPressed()), this, SLOT(lineEditUrlEntered()));//当网页输入框输入完成时候
     //点击treewidget中的item后，显示文章列表
@@ -112,6 +116,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->toolBox, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_toolBox_rightbtn_clicked(QPoint)));
     connect(ui->backToolBtn, SIGNAL(clicked(bool)), ui->webView, SLOT(back()));
     connect(ui->refreshToolBtn, SIGNAL(clicked(bool)), ui->webView, SLOT(reload()));
+    connect(ui->seachLineEdit, SIGNAL(returnPressed()), this, SLOT(slot_show_keywords()));
 
     connect(ui->manageCacheAction, SIGNAL(triggered(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->markAllReadAction, SIGNAL(triggered(bool)), this, SLOT(markAllReadContentsRead()));
@@ -128,7 +133,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->newTabToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->IRCToolBtn, SIGNAL(clicked(bool)), this, SLOT(showIrcWindow()));
     connect(ui->webToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
-    connect(ui->releaseToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->releaseToolBtn, SIGNAL(clicked(bool)), this, SLOT(slot_on_publishActivity()));
     connect(ui->shareToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->feedbackToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->renameAction, SIGNAL(triggered(bool)), this, SLOT(renameActionTriggered()));
@@ -162,29 +167,72 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
         //QString path = this->dbManager->getFeedPath(class_id, titleClicked);
         //qDebug() << path << " in mainwindow";
         QList<int> contentIdList = this->dbManager->getContentId(feed_id);
+        QList<int> readIdList, notReadIdList;
 
         this->currentFeedIdList.append(feed_id);
 
-        QGroupBox *artBox = new QGroupBox;
-        QVBoxLayout *vLayout = new QVBoxLayout(artBox);
+        //给文章分类成两部分：已读和未读
         for (int i = 0; i < contentIdList.size(); i++)
         {
-            QString title = this->dbManager->getContentName(contentIdList[i]);
-            int readornot = this->dbManager->getContentReadState(contentIdList[i]);
+            int tmp_id = contentIdList.at(i);
+            int readOrNot = this->dbManager->getContentReadState(tmp_id);
+            if (readOrNot == 0)
+                notReadIdList.append(tmp_id);
+            else if (readOrNot == 1)
+                readIdList.append(tmp_id);
+        }
+
+        QGroupBox *artBox = new QGroupBox;
+        QVBoxLayout *vLayout = new QVBoxLayout(artBox);
+
+        //先显示未读的文章
+        for (int j = 0; j < notReadIdList.size(); j++)
+        {
+            int tmp_id = notReadIdList.at(j);
+            QString title = "[未读] " + this->dbManager->getContentName(tmp_id);
             MyToolButton *titleButton = new MyToolButton;
             titleButton->feedtitle = titleClicked;
-            titleButton->pos = i;
+            titleButton->pos = tmp_id;
             titleButton->setAutoRaise(true);
-            if (readornot == 0)
-                title = "[未读] " + title;
-            else if (readornot == 1)
-                title = "[已读] " + title;
             titleButton->setText(title);
 
             vLayout->addWidget(titleButton);
-
             connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
         }
+
+        //然后显示已读的文章
+        for (int k = 0; k < readIdList.size(); k++)
+        {
+            int tmp_id = readIdList.at(k);
+            QString title = "[已读] " + this->dbManager->getContentName(tmp_id);
+            MyToolButton *titleButton = new MyToolButton;
+            titleButton->feedtitle = titleClicked;
+            titleButton->pos = tmp_id;
+            titleButton->setAutoRaise(true);
+            titleButton->setText(title);
+
+            vLayout->addWidget(titleButton);
+            connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
+        }
+
+//        for (int i = 0; i < contentIdList.size(); i++)
+//        {
+//            QString title = this->dbManager->getContentName(contentIdList[i]);
+//            int readornot = this->dbManager->getContentReadState(contentIdList[i]);
+//            MyToolButton *titleButton = new MyToolButton;
+//            titleButton->feedtitle = titleClicked;
+//            titleButton->pos = i;
+//            titleButton->setAutoRaise(true);
+//            if (readornot == 0)
+//                title = "[未读] " + title;
+//            else if (readornot == 1)
+//                title = "[已读] " + title;
+//            titleButton->setText(title);
+
+//            vLayout->addWidget(titleButton);
+
+//            connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
+//        }
         if (toolBoxHasRepeatChild(titleClicked))
         {
             int index = childItemIndexInToolBox(titleClicked);
@@ -332,13 +380,15 @@ int MainWindow::childItemIndexInToolBox(QString title)
 /*在右边wenengineview中加载点击文章的内容*/
 void MainWindow::showArticleContent(QString title, int pos)
 {
+    //qDebug() << pos;
     QString feedTitle = title;
     int class_id = this->dbManager->getClassIdByFeedTitle(feedTitle);
     int feedId = this->dbManager->getFeedId(class_id, feedTitle);
 
     QList<int> contentsList = this->dbManager->getContentId(feedId);//获取feedId对应的所有文章ID链表
     QString contentName, contentUrl;
-    int contentId = contentsList[pos];//获取点击文章的id
+    //int contentId = contentsList[pos];//获取点击文章的id
+    int contentId = pos;
     //qDebug() << contentId;
     contentUrl = this->dbManager->getContentUrl(contentId);//获取点击文章的URL
     contentName = this->dbManager->getContentName(contentId);//获取点击文章的标题
@@ -546,6 +596,25 @@ void MainWindow::initGUI()
     updateSuccessBox->setButtonText(QMessageBox::Ok, tr("确定"));
     updateSuccessBox->setButtonText(QMessageBox::Cancel, tr("取消"));
 
+    searchDialog = new QDialog();
+    wordsLabel = new QLabel;
+    gifLabel = new QLabel;
+    waitGif = new QMovie("://ico//image//waiting.gif");
+
+    wordsLabel->setText(tr("请稍等片刻，检索关键词..."));
+    wordsLabel->wordWrap();
+    gifLabel->setMovie(waitGif);
+    waitGif->start();
+
+    QHBoxLayout *waitLayout2 = new QHBoxLayout;
+    waitLayout2->addWidget(gifLabel);
+    waitLayout2->addWidget(wordsLabel);
+    searchDialog->setLayout(waitLayout2);
+    searchDialog->setStyleSheet("background-color: white");
+    searchDialog->setMaximumSize(450, 250);
+    searchDialog->setMinimumSize(450, 250);
+    searchDialog->setWindowTitle(tr("检索关键词"));
+    searchDialog->setWindowFlags(Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint);
 }
 
 /*创建工具栏*/
@@ -1519,6 +1588,44 @@ void MainWindow::slot_on_pullSchAds_triggered()
 #endif
 }
 
+void MainWindow::slot_on_getActiInfo_triggered()
+{
+    FileDownloader *downloader = new FileDownloader;
+    QTime t;
+    t.start();
+    QEventLoop loop;
+    downloader->doDownload(QUrl(ACTIVITYPATH));
+    connect(downloader, SIGNAL(downloadSuccess()), &loop, SLOT(quit()));
+    loop.exec();
+
+    QString path = downloader->getFileAddr();
+    //qDebug() << path;
+    ActivityXmlParser* parser = new ActivityXmlParser(path);
+    QList<Activity_Info> list = parser->getActivityInfoList();
+    parser->deleteCurrentXML();
+
+#ifdef DEBUG_ACTIVITY
+    for (int i = 0; i < list.size(); i++)
+    {
+        Activity_Info tmp = list.at(i);
+        qDebug() << "activity" << i + 1;
+        qDebug() << "  -->" << tmp.getTitle();
+        qDebug() << "  -->" << tmp.getTime();
+        qDebug() << "  -->" << tmp.getAddress();
+        qDebug() << "  -->" << tmp.getContent();
+        qDebug() << "  -->" << tmp.getName();
+        qDebug() << "  -->" << tmp.getStunum();
+        qDebug() << "  -->" << tmp.getTel();
+        qDebug() << "  -->" << tmp.getSchname();
+        qDebug() << "  -->" << tmp.getColname();
+        qDebug() << "";
+    }
+#endif
+    ActivityDialog* acDialog = new ActivityDialog;
+    acDialog->showActivity(list);
+    acDialog->show();
+}
+
 /*获得指定treewidget中指定名字的treewidgetitem*/
 QTreeWidgetItem* MainWindow::getTopTreeWidgetItem(QTreeWidget *parent, QString name)
 {
@@ -1571,4 +1678,28 @@ void MainWindow::showIrcWindow()
         irc->hide();
         ui->IRCToolBtn->setText("打开聊天窗口");
     }
+}
+
+void MainWindow::slot_on_publishActivity()
+{
+    ui->webView->load(QUrl(PUBLISH_ACTIVITY));
+    ui->tabWidget->setTabText(0, "发布信息");
+}
+
+void MainWindow::slot_show_keywords()
+{
+    QString key = ui->seachLineEdit->text();
+    QUrl url = ui->webView->url();
+    //qDebug() << key << " " << url;
+    if (key == "")
+        return;
+    this->searchDialog->show();
+
+    SearchTextTool* tool = new SearchTextTool;
+    connect(tool, SIGNAL(signal_search_finished()), this->searchDialog, SLOT(close()));
+    tool->searchKeyWord(url, key);
+
+    QString filePath = tool->getPath();
+    //qDebug() << filePath;
+    ui->webView->load(QUrl(filePath));
 }

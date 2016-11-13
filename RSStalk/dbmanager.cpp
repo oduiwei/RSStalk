@@ -4,6 +4,10 @@
 
 #include "dbmanager.h"
 #include <QMessageBox>
+//#define USE_MYSQL
+#define USE_SQLITE
+//#define DEBUG_VERSION
+#define RELEASE_VERSION
 
 DBManager::DBManager(QWidget *parent) : QDialog(parent)
 {
@@ -16,16 +20,26 @@ DBManager::~DBManager()
 
 void DBManager::initDB()
 {
+#ifdef USE_SQLITE
+    db = QSqlDatabase::addDatabase("QSQLITE");
+#ifdef RELEASE_VERSION
+    db.setDatabaseName("./rsstalk.db");//发布的时候用这行代码
+#endif
+#ifdef DEBUG_VERSION
+    db.setDatabaseName("F:\\Qt_workplace\\RSStalk\\rsstalk.db");//测试的时候用这行代码
+#endif
+#endif
+#ifdef USE_MYSQL
     db = QSqlDatabase::addDatabase("QMYSQL");
-    //db.setDatabaseName("rsstalk.db");
     db.setHostName("localhost");
     db.setPort(3306);
     db.setDatabaseName("rsstalk");
+#endif
     db.setUserName("root");
     db.setPassword("zhangzhuo123");
     if (!db.open())
     {
-        qDebug() << "open mysql failed.";
+        qDebug() << "open database failed.";
     }
 }
 

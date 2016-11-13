@@ -54,7 +54,8 @@
 #include "multidownloader.h"
 
 #define INFOFILEPATH "http://www.scjzz.com.cn/rsstalk/group/info.xml"
-//#define INFOFILEPATH "http://www.scjzz.com.cn/rsstalk/group/scuniv/chemistry/02.xml"
+#define ACTIVITYPATH "http://www.scjzz.com.cn/rsstalk/activity.xml"
+#define PUBLISH_ACTIVITY "http://www.scjzz.com.cn/activity/index.jsp"
 namespace Ui {
 class MainWindow;
 }
@@ -104,6 +105,7 @@ private:
     DBManager *dbManager;
     QDialog *renameDialog;
     XMLInfoDialog *infoDialog;
+    QDialog* searchDialog;
 
     QMenu *treeWidgetBlankMenu;
     QMenu *treeWidgetMenu;
@@ -181,6 +183,9 @@ private slots:
     void markAllReadContentsRead();//标记所有文章已读
     void showIrcWindow();//irc显示窗口
 	void slot_on_pullSchAds_triggered();
+    void slot_on_getActiInfo_triggered();
+    void slot_on_publishActivity();
+    void slot_show_keywords();
 public slots:
     void addSubcription();
     void showArticleContent(QString, int);

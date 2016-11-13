@@ -36,7 +36,9 @@ SOURCES += main.cpp\
     join_channel.cpp \
     filedownloader.cpp \
     xmlinfodialog.cpp \
-    multidownloader.cpp
+    multidownloader.cpp \
+    activitydialog.cpp \
+    searchtexttool.cpp
 
 HEADERS  += mainwindow.h \
     feed.h \
@@ -57,7 +59,9 @@ HEADERS  += mainwindow.h \
     join_channel.h \
      filedownloader.h \
     xmlinfodialog.h \
-    multidownloader.h
+    multidownloader.h \
+    activitydialog.h \
+    searchtexttool.h
 
 FORMS    += mainwindow.ui \
     addfolder.ui \
@@ -69,7 +73,8 @@ FORMS    += mainwindow.ui \
     emoji.ui \
     feedback.ui \
     join_channel.ui \
-    xmlinfodialog.ui
+    xmlinfodialog.ui \
+    activitydialog.ui
 
 RESOURCES += \
     img.qrc
