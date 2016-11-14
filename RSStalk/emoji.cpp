@@ -7,6 +7,10 @@ emoji::emoji(QWidget *parent) :
 {
     ui->setupUi(this);
     server_addr="119.29.111.145";
+    setMaximumWidth(316);
+    setMaximumHeight(168);
+    setMinimumWidth(316);
+    setMinimumHeight(168);
     //server_addr="192.168.56.102";
     port=8008;
     socket=new QUdpSocket(this);

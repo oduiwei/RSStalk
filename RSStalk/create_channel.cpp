@@ -6,6 +6,10 @@ create_channel::create_channel(QWidget *parent) :
     ui(new Ui::create_channel)
 {
     ui->setupUi(this);
+    setMaximumWidth(481);
+    setMaximumHeight(336);
+    setMinimumWidth(481);
+    setMinimumHeight(336);
     server_addr="119.29.111.145";
     //server_addr="192.168.56.102";
     port=8008;
@@ -15,6 +19,17 @@ create_channel::create_channel(QWidget *parent) :
     connect(ui->pushButton,SIGNAL(clicked(bool)), this, SLOT(create_c_clicked()));
 }
 
+int create_channel::is_all_number(char *str)
+{
+    int len = strlen(str);
+    int i=0;
+    for(;i<len;i++)
+    {
+        if(str[i] < '0' || str[i] > '9')return 0;
+    }
+    return 1;
+}
+
 void create_channel::create_c_clicked()
 {
 
@@ -22,6 +37,11 @@ void create_channel::create_c_clicked()
     if(ui->channel_name_lineEdit->text().length()>20)
     {
         ui->tipnamelabel->setText("名字长度不能超过20个中文！");
+        return;
+    }
+    if(is_all_number(ui->channel_name_lineEdit->text().toLatin1().data()))
+    {
+        ui->tipnamelabel->setText("名字不允许是纯数字！");
         return;
     }
     if(ui->theme_textEdit->toPlainText().length()>64)

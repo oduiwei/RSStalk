@@ -6,6 +6,10 @@ feedback::feedback(QWidget *parent) :
     ui(new Ui::feedback)
 {
     ui->setupUi(this);
+    setMaximumWidth(585);
+    setMaximumHeight(411);
+    setMinimumWidth(585);
+    setMinimumHeight(411);
     server_addr="119.29.111.145";
     //server_addr="192.168.56.102";
     port=8008;

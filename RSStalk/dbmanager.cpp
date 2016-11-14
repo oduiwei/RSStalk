@@ -6,8 +6,8 @@
 #include <QMessageBox>
 //#define USE_MYSQL
 #define USE_SQLITE
-//#define DEBUG_VERSION
-#define RELEASE_VERSION
+#define DEBUG_VERSION
+//#define RELEASE_VERSION
 
 DBManager::DBManager(QWidget *parent) : QDialog(parent)
 {

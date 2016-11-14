@@ -62,7 +62,7 @@ MainWindow::MainWindow(QWidget *parent) :
     dbManager = new DBManager();//初始化数据库操控
     infoDialog = new XMLInfoDialog;//创建一个XMLInfo对话框
 
-    irc=new Irc_window(); //IRC
+    irc=new Irc_window(0,ui->IRCToolBtn); //IRC
     irc->hide();
 
     initGUI();
@@ -114,7 +114,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->treeWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(on_treeWidget_title_clicked(QTreeWidgetItem*, int)));
     connect(ui->treeWidget, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_treeWidget_rightbtn_clicked(QPoint)));
     connect(ui->toolBox, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(on_toolBox_rightbtn_clicked(QPoint)));
-    connect(ui->backToolBtn, SIGNAL(clicked(bool)), ui->webView, SLOT(back()));
+    connect(ui->backToolBtn, SIGNAL(clicked(bool)), this, SLOT(slot_webview_back()));
     connect(ui->refreshToolBtn, SIGNAL(clicked(bool)), ui->webView, SLOT(reload()));
     connect(ui->seachLineEdit, SIGNAL(returnPressed()), this, SLOT(slot_show_keywords()));
 
@@ -132,10 +132,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->newTabToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
     connect(ui->IRCToolBtn, SIGNAL(clicked(bool)), this, SLOT(showIrcWindow()));
-    connect(ui->webToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->webToolBtn, SIGNAL(clicked(bool)), this, SLOT(slot_showMainPage()));
     connect(ui->releaseToolBtn, SIGNAL(clicked(bool)), this, SLOT(slot_on_publishActivity()));
     connect(ui->shareToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
-    connect(ui->feedbackToolBtn, SIGNAL(clicked(bool)), this, SLOT(showHasNotFinishedInfo()));
+    connect(ui->feedbackToolBtn, SIGNAL(clicked(bool)), this, SLOT(slot_feedbackPage()));
     connect(ui->renameAction, SIGNAL(triggered(bool)), this, SLOT(renameActionTriggered()));
     connect(this->updateThread, SIGNAL(updateError(int)), this, SLOT(updateFailed(int)));//更新操作失败
     connect(this->updateThread, SIGNAL(alreadyUpdate()), updateSuccessBox, SLOT(exec()));
@@ -1490,8 +1490,14 @@ void MainWindow::slot_on_pullSchAds_triggered()
     infoDialog->setContent(univList);
     infoDialog->exec();
 
+    if (infoDialog->whetherConfirm == false)
+        return;
+
     //当infoDialog关闭时，获取选择的订阅及分类列表
     QList<QList<int>> list = infoDialog->getSelectedTuple();
+    if (list.size() <= 0)
+        return;
+
     QList<int> feedIdList;//保存更新到数据库的feed的id
 //    for (int i = 0; i < list.size(); i++)
 //        qDebug() << list.at(i).at(0) << "-" << list.at(i).at(1) << "-" << list.at(i).at(2);
@@ -1702,4 +1708,23 @@ void MainWindow::slot_show_keywords()
     QString filePath = tool->getPath();
     //qDebug() << filePath;
     ui->webView->load(QUrl(filePath));
+}
+
+void MainWindow::slot_webview_back()
+{
+    ui->webView->back();
+    ui->webEditLine->clear();
+    ui->tabWidget->setTabText(0, "");
+}
+
+void MainWindow::slot_showMainPage()
+{
+    ui->tabWidget->setTabText(0, "软件主页");
+    ui->webView->load(QUrl(MAINPAGE_PATH));
+}
+
+void MainWindow::slot_feedbackPage()
+{
+    ui->tabWidget->setTabText(0, "意见反馈");
+    ui->webView->load(QUrl(FEEDBACK_PAGE_PATH));
 }

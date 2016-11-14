@@ -10,9 +10,8 @@
 #include"user.h"
 #include"channel_user.h"
 
-
-Irc_window::Irc_window(QWidget *parent) :
-    QWidget(parent),
+Irc_window::Irc_window(QWidget *parent,QToolButton*btn) :
+    QWidget(parent),mybtn(btn),
     ui(new Ui::Irc_window)
 {
     ui->setupUi(this);
@@ -20,6 +19,8 @@ Irc_window::Irc_window(QWidget *parent) :
     ui->irc_chat_body->tabBarAutoHide();
     myself.set_user_id(-1);
     myself.set_user_name("guest");
+    setMinimumWidth(861);
+    setMinimumHeight(568);
     /*QWidget*tmpaa=new QWidget();
     QHBoxLayout*newql=new QHBoxLayout(tmpaa);
     QTextBrowser*tmp=new QTextBrowser();
@@ -62,7 +63,7 @@ Irc_window::Irc_window(QWidget *parent) :
     connect(ui->feedback_btn,SIGNAL(clicked(bool)),this,SLOT(feedback_f()));
     connect(ui->part_btn,SIGNAL(clicked(bool)),this,SLOT(part()));
 
-    QString welcome="欢迎使用迷你irc聊天室v1.0。在这里，您可以尽情享受与陌生人聊天交流的乐趣；在这里，您可以随心讨论任何合乎国家法律法规的题目；在这里，即来即聊，聊完即走的特性使得您的隐私绝对安全:)";
+    QString welcome="欢迎使用迷你irc聊天室v1.0。在这里，您可以尽情享受与陌生人聊天交流的乐趣；在这里，您可以随心讨论任何合乎国家法律法规的题目；在这里，即来即聊，聊完即走的特性使得您无需当心隐私的安全:)";
     ui->welcome_text_broswer->setText("["+qt.currentTime().toString()+"]"+"系统消息");
     ui->welcome_text_broswer->append(welcome);
     qDebug() << __LINE__ <<qt.currentTime().toString();
@@ -160,6 +161,7 @@ void Irc_window::join()
 void Irc_window::insert_channel(channel*c)
 {
     channel_list.push_back(c);
+    qDebug() << __LINE__ <<"new channel added:"<<c->get_channel_name();
 }
 
 channel_user* Irc_window::get_user(int id,QString name)
@@ -263,25 +265,25 @@ void Irc_window::process_pending_datagrams()
             }
             else
             {
+                qDebug() << __LINE__ <<"begin";
                 channel_user* u=get_user(id,NULL);
+
                 if(u==NULL)return;
                 u->set_user_name(name);
                 for(int i=0;i<channel_list.size();i++)
                 {
                     channel_list[i]->update_view();
                 }
-                char message[64];
-                strcat(message,"[");
-                strcat(message,(const char*)qt.currentTime().toString().data()->toLatin1());
-                strcat(message,"]");
-                strcat(message,"系统消息");
+                QString message("[");
+                message+=qt.currentTime().toString();
+                message+="]系统消息";
                 QString tmpb(message);
                 ui->welcome_text_broswer->append(tmpb);
-                message[0]='\0';
-                strcat(message,"用户:");
-                strcat(message,num);
-                strcat(message," 更名为");
-                strcat(message,name);
+                message.clear();
+                message+="用户:";
+                message+=num;
+                message+=" 更名为";
+                message+=name;
                 QString tmpa(message);
                 ui->welcome_text_broswer->append(tmpa);
             }
@@ -297,18 +299,17 @@ void Irc_window::process_pending_datagrams()
             get_content0(num,tmp);
             int id=atoi(num);
             channel_user *u=get_user(id,NULL);
-            char message[1024];
-            strcat(message,"[");
-            strcat(message,(const char*)qt.currentTime().toString().data()->toLatin1());
-            strcat(message,"]");
-            strcat(message,"系统消息");
+            if(u==NULL)return;
+            QString message("[");
+            message+=qt.currentTime().toString();
+            message+="]系统消息";
             QString tmpb(message);
             ui->welcome_text_broswer->append(tmpb);
-            message[0]='\0';
-            strcat(message,"用户:");
-            strcat(message,(const char*)u->get_user_name().data()->toLatin1());
-            strcat(message," 下线了并留了留言:");
-            strcat(message,msg);
+            message.clear();
+            message+="用户:";
+            message+=u->get_user_name();
+            message+=" 下线了并留了留言:";
+            message+=msg;
             QString tmpa(message);
             ui->welcome_text_broswer->append(tmpa);
             u->set_user_alive(false);
@@ -317,6 +318,37 @@ void Irc_window::process_pending_datagrams()
                 channel_list[i]->update_view();
             }
         }
+        //else if(0==strncmp(datagram.data(),"/die",4))
+        //{
+          //  qDebug() << __LINE__ <<"/die entered";
+         //   char num[10];
+         //   get_content(num,datagram.data());
+         //   int userid=atoi(num);
+         //   for(int i=1;i<channel_list.size();i++)
+         //   {
+         //       for(int j=0;j<channel_list[i]->user_list.size();j++)
+          //      {
+          //          if(channel_list[i]->user_list[j]->get_user_id()==userid)
+          //          {
+          //              channel_list[i]->del_user(channel_list[i]->user_list[j]);
+          //          }
+          //      }
+          //      channel_list[i]->update_view();
+           // }
+       // }
+        //else if(0==strncmp(datagram.data(),"/heart",6))
+        //{
+          //  qDebug() << __LINE__ <<"/heart entered";
+            //QString tmp("/heart");
+           // int length=0;
+            //QTextCodec*code=QTextCodec::codecForName("GBK");
+           // qDebug() << __LINE__ <<"sent "<<tmp;
+            //if((length=socket->writeDatagram(tmp.toUtf8(),tmp.toUtf8().length(),QHostAddress(server_addr),port))!=tmp.toUtf8().length())
+            //{
+             //   qDebug() << __LINE__ <<"error";
+              //  return;
+            //}
+        //}
         else if(0==strncmp(datagram.data(),"/part",5))
         {
             qDebug() << __LINE__ <<"/part entered"<<datagram.data();
@@ -332,11 +364,13 @@ void Irc_window::process_pending_datagrams()
             if(u==NULL)
             {
                 qDebug() << __LINE__ <<"error accur";
+                return;
             }
             channel*c=get_channel(cid,NULL);
             if(c==NULL)
             {
                 qDebug() << __LINE__ <<"error accur";
+                return;
             }
             QString message("[");
             message+=qt.currentTime().toString();
@@ -367,11 +401,12 @@ void Irc_window::process_pending_datagrams()
             new_channel->set_channel_id(cid);
             new_channel->set_channel_name(channelname);
             channel_list.push_back(new_channel);
+            qDebug() << __LINE__ <<"new channel added:"<<channelname;
             QWidget&wg=new_channel->get_widget();
             int index=this->ui->irc_chat_body->addTab(&wg,channelname);
             new_channel->set_tab_index(index);
             this->ui->irc_chat_body->setCurrentWidget(this->ui->irc_chat_body->widget(index));
-            this->ui->irc_chat_body->setTabsClosable(true);
+            //this->ui->irc_chat_body->setTabsClosable(true);
             channel_user*tmpuser=new channel_user();
             tmpuser->set_user_alive(true);
             tmpuser->set_user_id(myself.get_user_id());
@@ -393,6 +428,7 @@ void Irc_window::process_pending_datagrams()
             get_content0(channelid,tmp);
             int cid=atoi(channelid);
             channel* u=get_channel(cid,NULL);
+            if(u==NULL)return;
             u->set_channel_theme(channeltheme);
 
             //char tmpa[64];
@@ -407,14 +443,16 @@ void Irc_window::process_pending_datagrams()
             //strcat(message,"系统消息");
             //QString tmpb(message);
             qDebug() << __LINE__ <<"message"<<message;
-            this->ui->welcome_text_broswer->append(message);
+            //this->ui->welcome_text_broswer->append(message);
+            u->tb->append(message);
             QString message2("频道:");
             message2+=channelid;
-            message2+="     更改了主题:";
+            message2+="主题:";
             message2+=channeltheme;
             qDebug() << __LINE__ <<message2;
-            this->ui->welcome_text_broswer->append(message2);
-            u->show_msg(message2);
+            u->tb->append(message2);
+            //this->ui->welcome_text_broswer->append(message2);
+            //u->show_msg(message2);
             //qDebug() << __LINE__ <<"/topic entered";
         }
         else if(0==strncmp(datagram.data(),"/key",4))
@@ -435,6 +473,7 @@ void Irc_window::process_pending_datagrams()
             get_content(key3,tmp);
             int cid=atoi(channelid);
             channel*u=get_channel(cid,NULL);
+            if(u==NULL)return;
             u->set_channel_keyword1(key1);
             u->set_channel_keyword2(key2);
             u->set_channel_keyword3(key3);
@@ -467,11 +506,12 @@ void Irc_window::process_pending_datagrams()
                     new_channel->set_channel_id(channel_id);
                     new_channel->set_channel_name(channelname);
                     channel_list.push_back(new_channel);
+                    qDebug() << __LINE__ <<"new channel added:"<<channelname;
                     QWidget&wg=new_channel->get_widget();
                     int index=this->ui->irc_chat_body->addTab(&wg,channelname);
                     new_channel->set_tab_index(index);
                     this->ui->irc_chat_body->setCurrentWidget(this->ui->irc_chat_body->widget(index));
-                    this->ui->irc_chat_body->setTabsClosable(true);
+                    //this->ui->irc_chat_body->setTabsClosable(true);
                     channel_user*tmpuser=new channel_user();
                     tmpuser->set_user_alive(true);
                     tmpuser->set_user_id(myself.get_user_id());
@@ -492,12 +532,26 @@ void Irc_window::process_pending_datagrams()
                         qDebug() << __LINE__ <<"error";
                         return;
                     }
+                    QString sm2("/topic ");
+                    sm2+=channelnum;
+                    length=0;
+                    //QTextCodec*code=QTextCodec::codecForName("GBK");
+                    qDebug() << __LINE__ <<"sent "<<sm;
+                    if((length=socket->writeDatagram(sm2.toUtf8(),sm2.toUtf8().length(),QHostAddress(server_addr),port))!=sm2.toUtf8().length())
+                    {
+                        qDebug() << __LINE__ <<"error";
+                        return;
+                    }
                 }
                 return;
             }
             else
             {
                 qDebug()<< __LINE__ <<tmp_c->user_list.size();
+                for(int i=0;i<tmp_c->user_list.size();i++)
+                {
+                    if(tmp_c->user_list[i]->get_user_id()==user_id)return;
+                }
                 channel_user*newu=new channel_user();
                 newu->set_user_alive(true);
                 newu->set_user_id(atoi(usernum));
@@ -591,7 +645,7 @@ void Irc_window::process_pending_datagrams()
                 get_content(tmp2,tmp);
                 get_content0(username,tmp2);
                 get_content(tmp,tmp2);
-                //if(atoi(usernum)==myself.get_user_id())continue;
+                if(atoi(usernum)==myself.get_user_id())continue;
                 channel_user*tmpuser=new channel_user();
                 tmpuser->set_user_alive(true);
                 tmpuser->set_user_id(atoi(usernum));
@@ -664,6 +718,47 @@ void Irc_window::process_pending_datagrams()
         else//other msg
         {
             qDebug() << __LINE__ <<"/other msg entered" <<datagram.data();
+            if(0==strcmp(datagram.data(),"USER_INVALID"))
+            {
+                int length=0;
+                //QTextCodec*code=QTextCodec::codecForName("GBK");
+                //qDebug() << __LINE__ <<"sent "<<this->ui->send_msg_text_edit->toPlainText();
+                if((length=socket->writeDatagram("/hello",6,QHostAddress(server_addr),port))!=6)
+                {
+                    qDebug() << __LINE__ <<"error";
+                    return;
+                }
+
+
+
+                QFile file("nick");
+                if(file.exists())
+                {
+                    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                         qDebug()<< __LINE__ <<"open failed";
+
+                    QTextStream in(&file);
+                    QString line("/nick ");
+                    QString tmp;
+                    tmp=in.readLine();
+                    line+=tmp;
+                    if((length=socket->writeDatagram(line.toUtf8(),line.toUtf8().length(),QHostAddress(server_addr),port))!=line.toUtf8().length())
+                    {
+                        qDebug() << __LINE__ <<"error";
+                        return;
+                    }
+                    ui->nick_label->setText(tmp);
+                }
+                else
+                {
+                    QString line("/nick guest");
+                    if((length=socket->writeDatagram(line.toUtf8(),line.toUtf8().length(),QHostAddress(server_addr),port))!=line.toUtf8().length())
+                    {
+                        qDebug() << __LINE__ <<"error";
+                        return;
+                    }
+                }
+            }
             char tmp[2048];
             get_content0(tmp,datagram.data());
             if(tmp[0]>'9'||tmp[0]<'0')
@@ -786,6 +881,7 @@ int Irc_window::get_channel_id(int id)
 void Irc_window::hideme()//tested
 {
     this->hide();
+    mybtn->setText("打开聊天窗口");
 }
 
 void Irc_window::feedback_f()//tested

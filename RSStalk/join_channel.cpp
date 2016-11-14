@@ -6,6 +6,10 @@ join_channel::join_channel(QWidget *parent) :
     ui(new Ui::join_channel)
 {
     ui->setupUi(this);
+    setMaximumWidth(463);
+    setMaximumHeight(186);
+    setMinimumWidth(463);
+    setMinimumHeight(186);
     server_addr="119.29.111.145";
     //server_addr="192.168.56.102";
     port=8008;

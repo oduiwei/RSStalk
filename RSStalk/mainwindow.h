@@ -56,6 +56,8 @@
 #define INFOFILEPATH "http://www.scjzz.com.cn/rsstalk/group/info.xml"
 #define ACTIVITYPATH "http://www.scjzz.com.cn/rsstalk/activity.xml"
 #define PUBLISH_ACTIVITY "http://www.scjzz.com.cn/activity/index.jsp"
+#define MAINPAGE_PATH "http://www.scjzz.com.cn/rsstalk/index.html"
+#define FEEDBACK_PAGE_PATH "http://www.scjzz.com.cn/rsstalk/feedback.html"
 namespace Ui {
 class MainWindow;
 }
@@ -186,6 +188,9 @@ private slots:
     void slot_on_getActiInfo_triggered();
     void slot_on_publishActivity();
     void slot_show_keywords();
+    void slot_webview_back();
+    void slot_showMainPage();
+    void slot_feedbackPage();
 public slots:
     void addSubcription();
     void showArticleContent(QString, int);

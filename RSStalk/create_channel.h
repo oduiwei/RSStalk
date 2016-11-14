@@ -19,6 +19,7 @@ class create_channel : public QWidget
 public:
     explicit create_channel(QWidget *parent = 0);
     ~create_channel();
+    int is_all_number(char *str);
 
 private:
     Ui::create_channel *ui;

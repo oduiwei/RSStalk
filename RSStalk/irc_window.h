@@ -63,7 +63,7 @@ class Irc_window : public QWidget
     Q_OBJECT
 
 public:
-    explicit Irc_window(QWidget *parent = 0);
+    explicit Irc_window(QWidget *parent = 0,QToolButton *btn=0);
     ~Irc_window();
     void get_content(char*,char*);
     void get_content0(char*,char*);
@@ -86,6 +86,7 @@ public:
     Ui::Irc_window *ui;
     user myself;
     QTime qt;
+    QToolButton*mybtn;
 private:
 private slots:
     void process_pending_datagrams();

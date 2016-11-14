@@ -171,7 +171,7 @@ void XMLInfoDialog::subscriptionSelectedFinished()
     //QList<QList<int>> list = getSelectedTuple();
 //    for (int i = 0; i < list.size(); i++)
 //        qDebug() << list.at(i).at(0) << "-" << list.at(i).at(1) << "-" << list.at(i).at(2);
-
+    this->whetherConfirm = true;
     close();
 }
 

@@ -123,7 +123,12 @@ void channel::set_channel_keyword3(QString k3)
 
 void channel::add_user(channel_user* u)
 {
+    for(int i=0;i<user_list.size();i++)
+    {
+        if(u->get_user_id()==user_list[i]->get_user_id())continue;
+    }
     user_list.push_back(u);
+    qDebug() << __LINE__ <<"new user added to list"<<u->get_user_name();
 }
 
 void channel::del_user(channel_user* u)

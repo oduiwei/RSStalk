@@ -6,6 +6,10 @@ find_channel::find_channel(QWidget *parent) :
     ui(new Ui::find_channel)
 {
     ui->setupUi(this);
+    setMaximumWidth(337);
+    setMaximumHeight(221);
+    setMinimumWidth(337);
+    setMinimumHeight(221);
     server_addr="119.29.111.145";
     //server_addr="192.168.56.102";
     port=8008;

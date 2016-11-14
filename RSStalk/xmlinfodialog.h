@@ -27,6 +27,8 @@ public:
     void setContent(QList<Univ_Info> list);
     QList<QList<int>> getSelectedTuple();
 
+    bool whetherConfirm = false;
+
 private:
     Ui::XMLInfoDialog *ui;
     QList<Univ_Info> univList;
