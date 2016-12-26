@@ -53,5 +53,9 @@
         <file>image/rss_panda.png</file>
         <file>image/folder_panda.png</file>
         <file>image/waiting.gif</file>
+        <file>image/already_read.png</file>
+        <file>image/not_read.png</file>
+        <file>image/dislike.png</file>
+        <file>image/like.png</file>
     </qresource>
 </RCC>

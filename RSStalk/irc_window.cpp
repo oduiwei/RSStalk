@@ -99,12 +99,27 @@ Irc_window::Irc_window(QWidget *parent,QToolButton*btn) :
     }
     else
     {
-        QString line("/nick guest");
+
+        QString line("/nick ");
+        QString nick("guest");
+        char tmp[7];
+        sprintf(tmp,"%d%d",qt.currentTime().second(),qt.currentTime().msec());
+        QString tmps(tmp);
+        nick+=tmp;
+        line+=nick;
+
         if((length=socket->writeDatagram(line.toUtf8(),line.toUtf8().length(),QHostAddress(server_addr),port))!=line.toUtf8().length())
         {
             qDebug() << __LINE__ <<"error";
             return;
         }
+        QFile file("nick");
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+            return;
+
+        QTextStream out(&file);
+        out << nick.toUtf8();
+
     }
 
 
@@ -261,6 +276,13 @@ void Irc_window::process_pending_datagrams()
                 tmpname.toUtf8();
                 myself.set_user_name(tmpname);
                 ui->nick_label->setText(name);
+                channel_user *u=get_user(myself.get_user_id(),NULL);
+                if(u==NULL)return;
+                u->set_user_name(name);
+                for(int i=0;i<channel_list.size();i++)
+                {
+                    channel_list[i]->update_view();
+                }
                 qDebug() << __LINE__ << "myself.name set:" <<tmpname;
             }
             else
@@ -277,15 +299,13 @@ void Irc_window::process_pending_datagrams()
                 QString message("[");
                 message+=qt.currentTime().toString();
                 message+="]系统消息";
-                QString tmpb(message);
-                ui->welcome_text_broswer->append(tmpb);
+                ui->welcome_text_broswer->append(message);
                 message.clear();
                 message+="用户:";
                 message+=num;
                 message+=" 更名为";
                 message+=name;
-                QString tmpa(message);
-                ui->welcome_text_broswer->append(tmpa);
+                ui->welcome_text_broswer->append(message);
             }
         }
         else if(0==strncmp(datagram.data(),"/quit",5))
@@ -303,52 +323,51 @@ void Irc_window::process_pending_datagrams()
             QString message("[");
             message+=qt.currentTime().toString();
             message+="]系统消息";
-            QString tmpb(message);
-            ui->welcome_text_broswer->append(tmpb);
+            ui->welcome_text_broswer->append(message);
             message.clear();
             message+="用户:";
             message+=u->get_user_name();
             message+=" 下线了并留了留言:";
             message+=msg;
-            QString tmpa(message);
-            ui->welcome_text_broswer->append(tmpa);
+            ui->welcome_text_broswer->append(message);
             u->set_user_alive(false);
             for(int i=0;i<channel_list.size();i++)
             {
                 channel_list[i]->update_view();
             }
         }
-        //else if(0==strncmp(datagram.data(),"/die",4))
-        //{
-          //  qDebug() << __LINE__ <<"/die entered";
-         //   char num[10];
-         //   get_content(num,datagram.data());
-         //   int userid=atoi(num);
-         //   for(int i=1;i<channel_list.size();i++)
-         //   {
-         //       for(int j=0;j<channel_list[i]->user_list.size();j++)
-          //      {
-          //          if(channel_list[i]->user_list[j]->get_user_id()==userid)
-          //          {
-          //              channel_list[i]->del_user(channel_list[i]->user_list[j]);
-          //          }
-          //      }
-          //      channel_list[i]->update_view();
-           // }
-       // }
-        //else if(0==strncmp(datagram.data(),"/heart",6))
-        //{
-          //  qDebug() << __LINE__ <<"/heart entered";
-            //QString tmp("/heart");
-           // int length=0;
-            //QTextCodec*code=QTextCodec::codecForName("GBK");
-           // qDebug() << __LINE__ <<"sent "<<tmp;
-            //if((length=socket->writeDatagram(tmp.toUtf8(),tmp.toUtf8().length(),QHostAddress(server_addr),port))!=tmp.toUtf8().length())
-            //{
-             //   qDebug() << __LINE__ <<"error";
-              //  return;
-            //}
-        //}
+        else if(0==strncmp(datagram.data(),"/die",4))
+        {
+            qDebug() << __LINE__ <<"/die entered";
+            char num[10];
+            get_content(num,datagram.data());
+            int userid=atoi(num);
+            for(int i=1;i<channel_list.size();i++)
+            {
+                for(int j=0;j<channel_list[i]->user_list.size();j++)
+                {
+                    if(channel_list[i]->user_list[j]->get_user_id()==userid)
+                    {
+                        channel_list[i]->del_user(channel_list[i]->user_list[j]);
+						channel_list[i]->update_view();
+						break;
+                    }
+                }
+                
+            }
+        }
+        else if(0==strncmp(datagram.data(),"/heart",6))
+        {
+            qDebug() << __LINE__ <<"/heart entered";
+            QString tmp("/heart");
+            int length=0;
+            qDebug() << __LINE__ <<"sent "<<tmp;
+            if((length=socket->writeDatagram(tmp.toUtf8(),tmp.toUtf8().length(),QHostAddress(server_addr),port))!=tmp.toUtf8().length())
+            {
+                qDebug() << __LINE__ <<"error";
+                return;
+            }
+        }
         else if(0==strncmp(datagram.data(),"/part",5))
         {
             qDebug() << __LINE__ <<"/part entered"<<datagram.data();
@@ -375,15 +394,13 @@ void Irc_window::process_pending_datagrams()
             QString message("[");
             message+=qt.currentTime().toString();
             message+="]系统消息";
-            QString tmpb(message);
-            ui->welcome_text_broswer->append(tmpb);
+            ui->welcome_text_broswer->append(message);
             message.clear();
             message+="用户:";
             message+=u->get_user_name();
             message+=" 离开了";
             message+=c->get_channel_name();
-            QString tmpa(message);
-            ui->welcome_text_broswer->append(tmpa);
+            ui->welcome_text_broswer->append(message);
             c->del_user(u);
             c->update_view();
         }
@@ -445,9 +462,7 @@ void Irc_window::process_pending_datagrams()
             qDebug() << __LINE__ <<"message"<<message;
             //this->ui->welcome_text_broswer->append(message);
             u->tb->append(message);
-            QString message2("频道:");
-            message2+=channelid;
-            message2+="主题:";
+            QString message2("此频道主题:");
             message2+=channeltheme;
             qDebug() << __LINE__ <<message2;
             u->tb->append(message2);
@@ -682,12 +697,14 @@ void Irc_window::process_pending_datagrams()
                 message2+=tmp2;
                 qDebug() << __LINE__ <<message2;
                 this->ui->welcome_text_broswer->append(message2);
+                this->ui->irc_chat_body->setCurrentWidget(this->ui->irc_chat_body->widget(0));
             }
             if(has_no_data)
             {
                 QString message2("没有找到相应的频道");
                 qDebug() << __LINE__ <<message2;
                 this->ui->welcome_text_broswer->append(message2);
+                this->ui->irc_chat_body->setCurrentWidget(this->ui->irc_chat_body->widget(0));
             }
         }
         else if(0==strncmp(datagram.data(),"/private",6))
@@ -700,20 +717,16 @@ void Irc_window::process_pending_datagrams()
             get_content(msg,tmp);
             get_content0(num,tmp);
             int id=atoi(num);
-            char message[64];
-            strcat(message,"[");
-            strcat(message,(const char*)qt.currentTime().toString().data()->toLatin1());
-            strcat(message,"]");
-            strcat(message,"系统消息");
-            QString tmpb(message);
-            ui->welcome_text_broswer->append(tmpb);
-            message[0]='\0';
-            strcat(message,"用户:");
-            strcat(message,num);
-            strcat(message," 私信你:");
-            strcat(message,msg);
-            QString tmpa(message);
-            ui->welcome_text_broswer->append(tmpa);
+            QString message("[");
+            message+=qt.currentTime().toString();
+            message+="]系统消息";
+            ui->welcome_text_broswer->append(message);
+            message.clear();
+            message+="用户:";
+            message+=num;
+            message+=" 私信你:";
+            message+=msg;
+            ui->welcome_text_broswer->append(message);
         }
         else//other msg
         {

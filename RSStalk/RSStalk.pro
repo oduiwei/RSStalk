@@ -38,7 +38,8 @@ SOURCES += main.cpp\
     xmlinfodialog.cpp \
     multidownloader.cpp \
     activitydialog.cpp \
-    searchtexttool.cpp
+    searchtexttool.cpp \
+    articleuiform.cpp
 
 HEADERS  += mainwindow.h \
     feed.h \
@@ -61,7 +62,8 @@ HEADERS  += mainwindow.h \
     xmlinfodialog.h \
     multidownloader.h \
     activitydialog.h \
-    searchtexttool.h
+    searchtexttool.h \
+    articleuiform.h
 
 FORMS    += mainwindow.ui \
     addfolder.ui \
@@ -74,7 +76,8 @@ FORMS    += mainwindow.ui \
     feedback.ui \
     join_channel.ui \
     xmlinfodialog.ui \
-    activitydialog.ui
+    activitydialog.ui \
+    articleuiform.ui
 
 RESOURCES += \
     img.qrc

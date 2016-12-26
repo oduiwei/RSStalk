@@ -49,6 +49,7 @@ public:
     void renameFeedName(int, QString);
     void updateFeedPath(int, QString);
     void updateContentReadState(int);//更新文章的已读状态
+    void updateContentFavoriteState(int, bool);
 
     int getTupleNumInSite();
     int getTupleNumInFeed();
@@ -69,6 +70,7 @@ public:
     int getDeleteFeedClass_Id(int);
     int getContentIdByName(QString);
     int getContentReadState(int);//读取某个文章是否已读
+    int getContentFavoriteState(int);
 
     QList<int> getContentId(int);
     QList<int> getFeedIdList();

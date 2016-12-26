@@ -6,6 +6,7 @@
 #include "multidownloader.h"
 #include "activitydialog.h"
 #include "searchtexttool.h"
+#include "articleuiform.h"
 //#define testfunction
 //#define PrintXML
 //#define DEBUG_ACTIVITY
@@ -164,8 +165,6 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
         titleClicked = item->text(column);//获取当前点击的文章的标题
         int class_id = this->dbManager->getClassId(item->parent()->text(0));
         int feed_id = this->dbManager->getFeedId(class_id, titleClicked);
-        //QString path = this->dbManager->getFeedPath(class_id, titleClicked);
-        //qDebug() << path << " in mainwindow";
         QList<int> contentIdList = this->dbManager->getContentId(feed_id);
         QList<int> readIdList, notReadIdList;
 
@@ -182,57 +181,64 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
                 readIdList.append(tmp_id);
         }
 
-        QGroupBox *artBox = new QGroupBox;
-        QVBoxLayout *vLayout = new QVBoxLayout(artBox);
+        QListWidget *listWidget = new QListWidget;
+        connect(listWidget, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(showArticleContent(QListWidgetItem*)));
 
         //先显示未读的文章
-        for (int j = 0; j < notReadIdList.size(); j++)
+        int j;
+        for (j = 0; j < notReadIdList.size(); j++)
         {
             int tmp_id = notReadIdList.at(j);
-            QString title = "[未读] " + this->dbManager->getContentName(tmp_id);
-            MyToolButton *titleButton = new MyToolButton;
-            titleButton->feedtitle = titleClicked;
-            titleButton->pos = tmp_id;
-            titleButton->setAutoRaise(true);
-            titleButton->setText(title);
 
-            vLayout->addWidget(titleButton);
-            connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
+            QString title = this->dbManager->getContentName(tmp_id);
+            int favorite = this->dbManager->getContentFavoriteState(tmp_id);
+
+            ArticleUIForm *titleForm = new ArticleUIForm;
+            titleForm->feedtitle = titleClicked;
+            titleForm->pos = tmp_id;
+            titleForm->setArticleLabelText(title);
+            titleForm->setWhetherReadIcon(false);
+            if (favorite == 0)
+                titleForm->setWhetherLikeIcon(false);
+            else if (favorite == 1)
+                titleForm->setWhetherLikeIcon(true);
+            titleForm->setToolTip(title);
+            connect(titleForm, SIGNAL(signal_FavoriteStateChange(int,bool)), this, SLOT(slot_articleLikeStateChanged(int,bool)));
+
+            QListWidgetItem *item = new QListWidgetItem;
+            item->setSizeHint(QSize(0, 54));
+
+            listWidget->insertItem(j, item);
+            listWidget->setItemWidget(item, titleForm);
         }
 
         //然后显示已读的文章
         for (int k = 0; k < readIdList.size(); k++)
         {
             int tmp_id = readIdList.at(k);
-            QString title = "[已读] " + this->dbManager->getContentName(tmp_id);
-            MyToolButton *titleButton = new MyToolButton;
-            titleButton->feedtitle = titleClicked;
-            titleButton->pos = tmp_id;
-            titleButton->setAutoRaise(true);
-            titleButton->setText(title);
 
-            vLayout->addWidget(titleButton);
-            connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
+            QString title = this->dbManager->getContentName(tmp_id);
+            int favorite = this->dbManager->getContentFavoriteState(tmp_id);
+
+            ArticleUIForm *titleForm = new ArticleUIForm;
+            titleForm->feedtitle = titleClicked;
+            titleForm->pos = tmp_id;
+            titleForm->setArticleLabelText(title);
+            titleForm->setWhetherReadIcon(true);
+            if (favorite == 0)
+                titleForm->setWhetherLikeIcon(false);
+            else if (favorite == 1)
+                titleForm->setWhetherLikeIcon(true);
+            titleForm->setToolTip(title);
+            connect(titleForm, SIGNAL(signal_FavoriteStateChange(int,bool)), this, SLOT(slot_articleLikeStateChanged(int,bool)));
+
+            QListWidgetItem *item = new QListWidgetItem;
+            item->setSizeHint(QSize(0, 54));
+
+            listWidget->insertItem(j + k, item);
+            listWidget->setItemWidget(item, titleForm);
         }
 
-//        for (int i = 0; i < contentIdList.size(); i++)
-//        {
-//            QString title = this->dbManager->getContentName(contentIdList[i]);
-//            int readornot = this->dbManager->getContentReadState(contentIdList[i]);
-//            MyToolButton *titleButton = new MyToolButton;
-//            titleButton->feedtitle = titleClicked;
-//            titleButton->pos = i;
-//            titleButton->setAutoRaise(true);
-//            if (readornot == 0)
-//                title = "[未读] " + title;
-//            else if (readornot == 1)
-//                title = "[已读] " + title;
-//            titleButton->setText(title);
-
-//            vLayout->addWidget(titleButton);
-
-//            connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
-//        }
         if (toolBoxHasRepeatChild(titleClicked))
         {
             int index = childItemIndexInToolBox(titleClicked);
@@ -240,91 +246,11 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
         }
         else
         {
-            ui->toolBox->addItem(artBox, titleClicked);
-            ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
+            ui->toolBox->addItem(listWidget, titleClicked);
+            ui->toolBox->setCurrentWidget(listWidget);
         }
     }
 }
-
-//        QFile feedfile(path);
-//        if (!feedfile.open(QIODevice::ReadOnly))
-//        {
-//            qDebug() << "open file failed";
-//        }
-
-//        XmlParser parser(&feedfile);           //用来判断点击的文章是属于rss还是atom
-
-//        if (parser.getFeedKind() == "rss")
-//        {
-//            Rss rss(path);
-
-//            QGroupBox *artBox = new QGroupBox;
-//            QVBoxLayout *vLayout = new QVBoxLayout(artBox);
-//            //vLayout->addStretch(1);
-
-//            QList<rssArticle> rssList = rss.getArtList();
-
-//            for (int posi = 0; posi < rssList.size(); posi++)
-//            {
-//                MyToolButton *titleButton = new MyToolButton;
-//                titleButton->feedtitle = titleClicked;
-//                titleButton->pos = posi;
-//                titleButton->setAutoRaise(true);
-//                titleButton->setText(rssList[posi].title);
-
-//                vLayout->addWidget(titleButton);
-
-//                connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
-//            }
-
-//            if (toolBoxHasRepeatChild(titleClicked))//当点击的订阅在toolbox中存在的时候获取存在的index并设置当前index为index
-//            {
-//                int index = childItemIndexInToolBox(titleClicked);
-//                ui->toolBox->setCurrentIndex(index);
-//            }
-//            else
-//            {
-//                ui->toolBox->addItem(artBox, titleClicked);
-//                ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
-//            }
-//        }
-//        else if (parser.getFeedKind() == "atom")
-//        {
-//            Atom atom(path);
-
-//            QGroupBox *artBox = new QGroupBox;
-//            QVBoxLayout *vLayout = new QVBoxLayout(artBox);
-
-//            QList<atomArticle> atomList = atom.getArtList();
-
-//            for (int posi = 0; posi < atomList.size(); posi++)
-//            {
-//                MyToolButton *titleButton = new MyToolButton;
-//                titleButton->feedtitle = titleClicked;
-//                titleButton->pos = posi;
-//                titleButton->setAutoRaise(true);
-//                titleButton->setText(atomList[posi].title);
-
-//                vLayout->addWidget(titleButton);
-
-//                connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
-//            }
-
-//            if (toolBoxHasRepeatChild(titleClicked))
-//            {
-//                int index = childItemIndexInToolBox(titleClicked);
-//                ui->toolBox->setCurrentIndex(index);
-//            }
-//            else
-//            {
-//                ui->toolBox->addItem(artBox, titleClicked);
-//                ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
-//            }
-//        }
-
-//        feedfile.close();
-//    }
-//}
 
 /*判断新建的item是否已经存在在toolbox中*/
 bool MainWindow::toolBoxHasRepeatChild(QString title)//判断新建的item是否已经存在toolbox中
@@ -377,19 +303,13 @@ int MainWindow::childItemIndexInToolBox(QString title)
     return 0;
 }
 
-/*在右边wenengineview中加载点击文章的内容*/
-void MainWindow::showArticleContent(QString title, int pos)
+void MainWindow::showArticleContent(QListWidgetItem *item)
 {
-    //qDebug() << pos;
-    QString feedTitle = title;
-    int class_id = this->dbManager->getClassIdByFeedTitle(feedTitle);
-    int feedId = this->dbManager->getFeedId(class_id, feedTitle);
+    QListWidget *listWidget = (QListWidget *)this->sender();
+    ArticleUIForm *form = (ArticleUIForm*)listWidget->itemWidget(item);
 
-    QList<int> contentsList = this->dbManager->getContentId(feedId);//获取feedId对应的所有文章ID链表
     QString contentName, contentUrl;
-    //int contentId = contentsList[pos];//获取点击文章的id
-    int contentId = pos;
-    //qDebug() << contentId;
+    int contentId = form->pos;
     contentUrl = this->dbManager->getContentUrl(contentId);//获取点击文章的URL
     contentName = this->dbManager->getContentName(contentId);//获取点击文章的标题
 
@@ -403,8 +323,7 @@ void MainWindow::showArticleContent(QString title, int pos)
         return;
     }
 
-    QToolButton* btn = (QToolButton*)this->sender();
-    btn->setText("[已读] " + contentName);
+    form->setWhetherReadIcon(true);
 
     QUrl articleUrl(contentUrl); //让界面中的webview加载网页
     ui->webView->load(articleUrl);
@@ -1727,4 +1646,9 @@ void MainWindow::slot_feedbackPage()
 {
     ui->tabWidget->setTabText(0, "意见反馈");
     ui->webView->load(QUrl(FEEDBACK_PAGE_PATH));
+}
+
+void MainWindow::slot_articleLikeStateChanged(int id, bool state)
+{
+    dbManager->updateContentFavoriteState(id, state);
 }

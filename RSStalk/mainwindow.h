@@ -191,9 +191,11 @@ private slots:
     void slot_webview_back();
     void slot_showMainPage();
     void slot_feedbackPage();
+    void slot_articleLikeStateChanged(int, bool);
 public slots:
     void addSubcription();
-    void showArticleContent(QString, int);
+    //void showArticleContent(QString, int);
+    void showArticleContent(QListWidgetItem*);
 
 signals:
     void downloadFinish();

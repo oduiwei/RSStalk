@@ -4,8 +4,8 @@
 
 #include "dbmanager.h"
 #include <QMessageBox>
-//#define USE_MYSQL
-#define USE_SQLITE
+#define USE_MYSQL
+//#define USE_SQLITE
 #define DEBUG_VERSION
 //#define RELEASE_VERSION
 
@@ -988,5 +988,36 @@ void DBManager::updateContentReadState(int content_id)
     {
         QSqlError lastError = query.lastError();
         qDebug() << lastError.driverText() << "\nfail in updateContentReadState.";
+    }
+}
+
+int DBManager::getContentFavoriteState(int id)
+{
+    QSqlQuery query(db);
+    bool ok = query.exec(QString("SELECT favorite FROM contents where id = %1;").arg(id));
+    if (!ok)
+    {
+        QSqlError lastError = query.lastError();
+        qDebug() << lastError.driverText() << "\nfail in getContentFavoriteState.";
+    }
+    int r;
+    if (query.next())
+        r = query.value(0).toInt();
+    return r;
+}
+
+void DBManager::updateContentFavoriteState(int id, bool value)
+{
+    QSqlQuery query(db);
+    int v = 0;
+    if (value == true)
+        v = 1;
+    else
+        v = 0;
+    bool ok = query.exec(QString("update contents set favorite = %1 where id = %2;").arg(v).arg(id));
+    if (!ok)
+    {
+        QSqlError lastError = query.lastError();
+        qDebug() << lastError.driverText() << "\nfail in updateContentFavoriteState.";
     }
 }
