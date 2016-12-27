@@ -28,15 +28,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->toolBox->removeItem(0);
 
     ui->tabWidget->setTabText(0, tr("软件学院"));
-    ui->webEditLine->setText(tr("在这儿可以输入网址哦！"));
+    ui->middleWidget->hide();
 
     dialog = new QDialog;//新建文件夹的界面初始化
     folderUi.setupUi(dialog);
     dialog->setWindowTitle(tr("新建分类"));
     folderUi.buttonBox->button(QDialogButtonBox::Ok)->setText(tr("确定"));
+    folderUi.buttonBox->button(QDialogButtonBox::Ok)->setIcon(QIcon("://ico//image//ok.png"));
     folderUi.buttonBox->button(QDialogButtonBox::Cancel)->setText(tr("取消"));
-    dialog->setMaximumSize(457, 107);
-    dialog->setMinimumSize(457, 107);
+    folderUi.buttonBox->button(QDialogButtonBox::Cancel)->setIcon(QIcon("://ico//image//cancel.png"));
+
     QAbstractButton *okBtn = folderUi.buttonBox->button(QDialogButtonBox::Ok);
     connect(okBtn, SIGNAL(clicked(bool)), this, SLOT(addFolderToTreeWidget()));
 
@@ -67,6 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     irc->hide();
 
     initGUI();
+    loadTheme();
     initWindowIcon();
     createToolBar();//创建工具栏
     setWindowFont();//初始化所有部件的字体
@@ -85,7 +87,7 @@ MainWindow::MainWindow(QWidget *parent) :
     infoBox.setButtonText(QMessageBox::Cancel, tr("否"));
     QAbstractButton *oBtn = infoBox.button(QMessageBox::Ok);
     QAbstractButton *nBtn = infoBox.button(QMessageBox::Cancel);
-    infoBox.exec();
+    //infoBox.exec();
 
     if (infoBox.clickedButton() == nBtn)
     {
@@ -147,6 +149,18 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::loadTheme()
+{
+    QFile file("://theme//theme.qss");
+    if (!file.open(QFile::ReadOnly))
+    {
+        qDebug() << "Open theme failed.";
+        return;
+    }
+    QString styleSheet = file.readAll();
+    qApp->setStyleSheet(styleSheet);
+}
+
 /*初始化所有窗体的图标*/
 void MainWindow::initWindowIcon()
 {
@@ -161,6 +175,9 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
 {
     if (item->parent())//判断点击的item是否是子Items
     {
+        if (ui->middleWidget->isHidden())
+            ui->middleWidget->show();
+
         QString titleClicked;
         titleClicked = item->text(column);//获取当前点击的文章的标题
         int class_id = this->dbManager->getClassId(item->parent()->text(0));
@@ -206,7 +223,7 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
             connect(titleForm, SIGNAL(signal_FavoriteStateChange(int,bool)), this, SLOT(slot_articleLikeStateChanged(int,bool)));
 
             QListWidgetItem *item = new QListWidgetItem;
-            item->setSizeHint(QSize(0, 54));
+            item->setSizeHint(QSize(0, 55));
 
             listWidget->insertItem(j, item);
             listWidget->setItemWidget(item, titleForm);
@@ -233,7 +250,7 @@ void MainWindow::on_treeWidget_title_clicked(QTreeWidgetItem* item, int column)
             connect(titleForm, SIGNAL(signal_FavoriteStateChange(int,bool)), this, SLOT(slot_articleLikeStateChanged(int,bool)));
 
             QListWidgetItem *item = new QListWidgetItem;
-            item->setSizeHint(QSize(0, 54));
+            item->setSizeHint(QSize(0, 55));
 
             listWidget->insertItem(j + k, item);
             listWidget->setItemWidget(item, titleForm);
@@ -337,14 +354,13 @@ void MainWindow::initGUI()
     ui->aheadToolBtn->setText(tr("前进"));
     ui->backToolBtn->setText(tr("后退"));
     ui->refreshToolBtn->setText(tr("刷新"));
+    ui->page1->deleteLater();//需要删除toolbox默认的widget
 
     renameDialog = new QDialog;
     renameUi.setupUi(renameDialog);
     renameDialog->setWindowTitle(tr("重命名"));
     renameUi.buttonBox->button(QDialogButtonBox::Ok)->setText(tr("确定"));
     renameUi.buttonBox->button(QDialogButtonBox::Cancel)->setText(tr("取消"));
-    renameDialog->setMaximumSize(400, 133);
-    renameDialog->setMinimumSize(400, 133);
 
     /*初始化新建向导界面，后面初始化新建文件夹的时候会有错误*/
     QFont wizardFont("宋体", 10);
@@ -369,7 +385,7 @@ void MainWindow::initGUI()
     tipsLabel->setWordWrap(true);
 
     pixLabel = new QLabel;
-    QPixmap pix("://ico//image//RSS.png");
+    QPixmap pix("://ico//image//RSS2.png");
     pixLabel->setPixmap(pix);
     pixLabel->resize(QSize(pix.width(), pix.height()));
 
@@ -395,7 +411,7 @@ void MainWindow::initGUI()
     nameLabel->setText(tr("请输入这个订阅的标题："));
 
     nameLineEdit = new QLineEdit;
-    nameLineEdit->setText(tr("在这里可以自定义订阅的标题哦！"));
+    nameLineEdit->setPlaceholderText("在这里可以自定义订阅的标题哦！");
 
     chooseLabel = new QLabel;
     chooseLabel->setText(tr("请选择一个分类文件夹："));
@@ -408,11 +424,22 @@ void MainWindow::initGUI()
     header->setSectionResizeMode(QHeaderView::Stretch);
     header->setDefaultAlignment(Qt::AlignCenter);
     folderTreeWidget->setHeader(header);
+    /*********************************样式**************************************************/
+    folderTreeWidget->setStyleSheet("QTreeWidget {"
+                                    "background-color: rgb(230,237,249);"
+                                "}"
+                                "QTreeWidget>QHeaderView:section {"
+                                    "background-color: rgb(35,57,79);"
+                                    "color: white;"
+                                "}");
+    /***************************************************************************************/
+    newFolderBtn = new QToolButton;
+    newFolderBtn->setStyleSheet("QToolButton {"
+                                "image: url(://ico//image//add.png);"
+                                "with: 25px;height: 25px;"
+                                "}");
 
-    newFolderBtn = new QPushButton;
-    newFolderBtn->setText(tr("新建文件夹"));
-
-    QPixmap pixInPage2("://ico//image//RSS.png");
+    QPixmap pixInPage2("://ico//image//RSS2.png");
     pixLabelInPage2 = new QLabel;
     pixLabelInPage2->setPixmap(pixInPage2);
 
@@ -447,7 +474,7 @@ void MainWindow::initGUI()
     finishLabel->setText(tr("确定订阅点击下一步，我们将下载订阅文件，这可能需要消耗写时间..."));
     finishLabel->setWordWrap(true);
 
-    QPixmap pixInPage3("://ico//image//RSS.png");
+    QPixmap pixInPage3("://ico//image//RSS2.png");
     pixLabelInPage3 = new QLabel;
     pixLabelInPage3->setPixmap(pixInPage3);
 
@@ -1021,6 +1048,8 @@ void MainWindow::on_deleteAction_triggered()
                     if (curItem->child(i)->text(0) == ui->toolBox->itemText(j))
                     {
                         ui->toolBox->removeItem(j);
+                        if (ui->toolBox->count() == 0)
+                            ui->middleWidget->hide();
                         continue;
                     }
                 }
@@ -1076,6 +1105,8 @@ void MainWindow::on_deleteAction_triggered()
             if (ui->toolBox->itemText(j) == curItem->text(0))
             {
                 ui->toolBox->removeItem(j);
+                if (ui->toolBox->count() == 0)
+                    ui->middleWidget->hide();
                 continue;
             }
         }
@@ -1094,6 +1125,11 @@ void MainWindow::on_deleteToolBox_triggered()
 
     if (index == -1)
         return;
+
+    if (ui->toolBox->count() == 1)
+    {
+        ui->middleWidget->hide();
+    }
 
     QString feedName = ui->toolBox->itemText(index);
 
@@ -1366,28 +1402,34 @@ void MainWindow::markAllReadContentsRead()
     }
 
     ui->toolBox->currentWidget()->deleteLater();
-    QGroupBox *artBox = new QGroupBox;
-    QVBoxLayout *vLayout = new QVBoxLayout(artBox);
+
+    QListWidget *listWidget = new QListWidget;
+    connect(listWidget, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(showArticleContent(QListWidgetItem*)));
     for (int i = 0; i < contentIdList.size(); i++)
     {
         QString title = this->dbManager->getContentName(contentIdList[i]);
-        int readornot = this->dbManager->getContentReadState(contentIdList[i]);
-        MyToolButton *titleButton = new MyToolButton;
-        titleButton->feedtitle = feedName;
-        titleButton->pos = i;
-        titleButton->setAutoRaise(true);
-        if (readornot == 0)
-            title = "[未读] " + title;
-        else if (readornot == 1)
-            title = "[已读] " + title;
-        titleButton->setText(title);
+        int favorite = this->dbManager->getContentFavoriteState(contentIdList[i]);
 
-        vLayout->addWidget(titleButton);
+        ArticleUIForm *titleForm = new ArticleUIForm;
+        titleForm->feedtitle = feedName;
+        titleForm->pos = contentIdList[i];
+        titleForm->setArticleLabelText(title);
+        titleForm->setWhetherReadIcon(true);
+        if (favorite == 0)
+            titleForm->setWhetherLikeIcon(false);
+        else if (favorite == 1)
+            titleForm->setWhetherLikeIcon(true);
+        titleForm->setToolTip(title);
+        connect(titleForm, SIGNAL(signal_FavoriteStateChange(int,bool)), this, SLOT(slot_articleLikeStateChanged(int,bool)));
 
-        connect(titleButton, SIGNAL(myclicked(QString,int)), this, SLOT(showArticleContent(QString,int)));
+        QListWidgetItem *item = new QListWidgetItem;
+        item->setSizeHint(QSize(0, 55));
+
+        listWidget->insertItem(i, item);
+        listWidget->setItemWidget(item, titleForm);
     }
-    ui->toolBox->addItem(artBox, feedName);
-    ui->toolBox->setCurrentWidget(artBox);//把用户点击的推送设为当前显示
+    ui->toolBox->addItem(listWidget, feedName);
+    ui->toolBox->setCurrentWidget(listWidget);
 }
 
 void MainWindow::slot_on_pullSchAds_triggered()
