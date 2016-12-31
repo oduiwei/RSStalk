@@ -66,6 +66,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     irc=new Irc_window(0,ui->IRCToolBtn); //IRC
     irc->hide();
+    irc->setStyleSheet("QWidget {"
+                                    "background-color: rgb(230,237,249);"
+                                "}"
+                                );
 
     initGUI();
     loadTheme();
