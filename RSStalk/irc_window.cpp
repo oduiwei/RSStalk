@@ -17,6 +17,12 @@ Irc_window::Irc_window(QWidget *parent,QToolButton*btn) :
     ui->setupUi(this);
     ui->irc_chat_body->removeTab(1);
     ui->irc_chat_body->tabBarAutoHide();
+    QFont ft("Microsoft YaHei",  12,   75);
+    ui->irc_chat_body->setFont(ft);
+    ui->irc_chat_body->setStyleSheet("QTabWidget {"
+                                    "background-color: rgb(230,237,249);"
+                                "}"
+                                );
     myself.set_user_id(-1);
     myself.set_user_name("guest");
     setMinimumWidth(861);
@@ -63,9 +69,15 @@ Irc_window::Irc_window(QWidget *parent,QToolButton*btn) :
     connect(ui->feedback_btn,SIGNAL(clicked(bool)),this,SLOT(feedback_f()));
     connect(ui->part_btn,SIGNAL(clicked(bool)),this,SLOT(part()));
 
+    ui->emoji_btn->setStyleSheet(    "QPushButton{border-image: url(Resources/images/BreadCrumbNavigation/navigation_more_normal.png);}"
+                                     "QPushButton:hover{border-image: url(Resources/images/BreadCrumbNavigation/navigation_more_hover.png);}"
+                                     "QPushButton:pressed{border-image: url(Resources/images/BreadCrumbNavigation/navigation_more_pressed.png);}");
+
     QString welcome="欢迎使用迷你irc聊天室v1.0。在这里，您可以尽情享受与陌生人聊天交流的乐趣；在这里，您可以随心讨论任何合乎国家法律法规的题目；在这里，即来即聊，聊完即走的特性使得您无需当心隐私的安全:)";
+    ui->welcome_text_broswer->setFont(ft);
     ui->welcome_text_broswer->setText("["+qt.currentTime().toString()+"]"+"系统消息");
     ui->welcome_text_broswer->append(welcome);
+
     qDebug() << __LINE__ <<qt.currentTime().toString();
 
     int length=0;
