@@ -168,10 +168,28 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="middleWidget" native="true">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1">
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>搜索</string>
+            </property>
+           </widget>
+          </item>
           <item>
            <widget class="QLineEdit" name="seachLineEdit">
             <property name="sizePolicy">
@@ -179,15 +197,6 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
-            </property>
-            <property name="font">
-             <font>
-              <family>幼圆</family>
-              <pointsize>9</pointsize>
-             </font>
-            </property>
-            <property name="placeholderText">
-             <string>关键字搜索</string>
             </property>
            </widget>
           </item>
@@ -212,16 +221,13 @@
           <property name="currentIndex">
            <number>0</number>
           </property>
-          <property name="tabSpacing">
-           <number>2</number>
-          </property>
           <widget class="QWidget" name="page1">
            <property name="geometry">
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>303</width>
-             <height>699</height>
+             <width>235</width>
+             <height>693</height>
             </rect>
            </property>
            <attribute name="label">
@@ -262,9 +268,6 @@
             </property>
             <property name="maxLength">
              <number>32782</number>
-            </property>
-            <property name="placeholderText">
-             <string>这儿可以输入网址哦</string>
             </property>
            </widget>
           </item>

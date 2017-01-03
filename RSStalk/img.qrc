@@ -57,10 +57,5 @@
         <file>image/not_read.png</file>
         <file>image/dislike.png</file>
         <file>image/like.png</file>
-        <file>image/RSS2.png</file>
-        <file>image/cancel.png</file>
-        <file>image/ok.png</file>
-        <file>image/add.png</file>
-        <file>image/background.jpg</file>
     </qresource>
 </RCC>

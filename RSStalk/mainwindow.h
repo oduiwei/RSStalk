@@ -79,7 +79,6 @@ public:
     ~MainWindow();
 
     void initGUI();//初始化某些界面部件
-    void loadTheme();//加载主题文件
     void createToolBar();//创建工具栏
     void setWindowFont();//初始化所有部件的字体
     void initWindowIcon();
@@ -136,7 +135,7 @@ private:
     QLineEdit *nameLineEdit;
     QLabel *chooseLabel;
     QTreeWidget *folderTreeWidget;
-    QToolButton *newFolderBtn;
+    QPushButton *newFolderBtn;
     QLabel *pixLabelInPage2;
 
     QLabel *finishLabel;//page3控件

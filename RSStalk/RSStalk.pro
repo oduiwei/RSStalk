@@ -80,8 +80,7 @@ FORMS    += mainwindow.ui \
     articleuiform.ui
 
 RESOURCES += \
-    img.qrc \
-    theme.qrc
+    img.qrc
 
 RC_FILE +=  icon.rc
 
