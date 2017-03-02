@@ -1,0 +1,134 @@
+﻿QMainWindow#MainWindow {
+	background-color: rgb(236,242,245);
+}
+
+QDialog {
+	background-color: rgb(236,242,245);
+}
+
+QMenuBar {
+	background-color: rgb(35,57,79);
+	color: white;
+}
+
+QMenuBar::item:selected {
+	color: rgb(26,188,156);
+	background-color: rgb(35,57,79);
+}
+
+QMenu {
+	background-color: rgb(230,237,249);
+	color: rgb(35,57,79);
+}
+
+QMenu::item:selected {
+	background-color: rgb(35,57,79);
+	color: rgb(26,188,156);
+}
+
+QToolBar {
+	background-color: rgb(35,57,79);
+	border: none;
+}
+
+QToolButton, QLineEdit, QTreeWidget, QListWidget {
+	border: none;
+}
+
+QTreeWidget#treeWidget {
+	background-color: rgb(230,237,249);
+}
+
+QTreeWidget#treeWidget>QHeaderView:section {
+	background-color: rgb(35,57,79);
+	color: white;
+}
+
+QToolButton#IRCToolBtn, #webToolBtn, #releaseToolBtn, #shareToolBtn, #feedbackToolBtn {
+	background-color: rgb(52,73,94);
+	color: white;
+	border: none;
+}
+
+QToolButton#IRCToolBtn:hover, #webToolBtn:hover, #releaseToolBtn:hover, #shareToolBtn:hover, #feedbackToolBtn:hover {
+	background-color: rgb(35,57,79);
+	color: rgb(26,188,156);
+	border:none;
+}
+
+QLineEdit {
+	border: 1px solid rgb(35,57,79);
+	border-radius: 3px;
+	padding: 5px 10px;
+	color: rgb(35,57,79);
+	background-color: rgb(230,237,249);
+}
+
+QLineEdit:hover {
+	border: 2px solid rgb(35,57,79);
+	border-radius: 3px;
+	padding: 5px 10px;
+	color: rgb(35,57,79);
+	background-color: rgb(230,237,249);
+}
+
+QLineEdit#seachLineEdit:focus, #webEditLine:focus {
+	border: 2px solid rgb(35,57,79);
+	border-radius: 3px;
+	padding: 5px 10px;
+	color: rgb(35,57,79);
+	background-color: rgb(230,237,249);
+}
+
+QToolBox#toolBox::tab {
+	background-color:rgb(52,73,94);
+	color: white;
+	alignment: center;
+}
+
+QToolBox#toolBox::tab:selected {
+	background-color:rgb(52,73,94);
+	color: rgb(26,188,156);
+	alignment: center;
+}
+
+QToolBox#toolBox QTabWidget {
+	
+}
+
+QToolBox#toolBox QWidget {
+	background-color: rgb(230,237,249);
+}
+
+QToolBox#toolBox QWidget QListWidget::item {
+	border-bottom: 1px solid rgb(35,57,79);
+}
+
+QTabWidget#tabWidget {
+	border: none;
+}
+
+QTabWidget#tabWidget QTabBar::tab:selected {
+	background-color: rgb(35,57,79);
+	color: white;
+}
+
+QTabWidget#tabWidget QTabBar::tab:hover {
+	background-color: rgb(35,57,79);
+	color: rgb(26,188,156);
+}
+
+QDialogButtonBox::button {
+	background-color: rgb(35,57,79);
+	color: white;
+}
+
+QDialogButtonBox:button:hover {
+	background-color: rgb(35,57,79);
+	color: rgb(26,188,156);
+}
+
+QScrollBar::handle {
+	background-color: rgb(35,57,79);
+	width: 5px;
+}
